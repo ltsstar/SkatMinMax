@@ -5,52 +5,53 @@
 #include "skat.h"
 #include "minmax.h"
 
-TEST_CASE(" asdf", "[asdf]")
+TEST_CASE( "joker_in_deck", "[skat]")
 {
-    REQUIRE(1 == 1);
+    std::list<Card> deck = {Card::D7, Card::SQ, Card::SJ, Card::CJ, Card::C7};
+    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
+
+    REQUIRE(joker_in_deck == true);
 }
 
-TEST_CASE( "is_joker", "[skat]")
+TEST_CASE( "joker_in_deck 2", "[skat]")
 {
-    GamePlay gameplay = GamePlay(Trump::Hearts);
-    REQUIRE(gameplay.is_joker(Card::DJ) == true);
-    REQUIRE(gameplay.is_joker(Card::HJ) == true);
-    REQUIRE(gameplay.is_joker(Card::SJ) == true);
-    REQUIRE(gameplay.is_joker(Card::CJ) == true);
+    std::list<Card> deck = {Card::DJ};
+    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
 
-    REQUIRE(gameplay.is_joker(Card::H8) == false);
+    REQUIRE(joker_in_deck == true);
 }
 
-TEST_CASE( "get_color_and_jokers", "[skat]")
+TEST_CASE( "joker_in_deck 3", "[skat]")
 {
-    GamePlay gameplay = GamePlay(Trump::Hearts);
-    std::list<Card> cards = {Card::H9, Card::D7, Card::CQ, Card::HJ, Card::SJ};
-    std::list<Card> colors_and_jokers = gameplay.get_color_and_jokers(1, cards);
+    std::list<Card> deck = {Card::C7};
+    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
 
-    std::list<Card> true_colors_and_jokers = {Card::H9, Card::HJ, Card::SJ};
-    REQUIRE(colors_and_jokers == true_colors_and_jokers);
+    REQUIRE(joker_in_deck == false);
 }
 
-TEST_CASE( "get_viable_cards trump", "[skat]")
+TEST_CASE( "color_in_deck normal", "[skat]")
 {
+    std::list<Card> deck = {Card::C7};
+    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
+    bool clubs_in_deck = GamePlay::color_in_deck(3, b_deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, b_deck);
 
-    GamePlay gameplay = GamePlay(Trump::Hearts);
-    std::list<Card> remaining_cards = {Card::H9, Card::D7, Card::DJ, Card::HJ, Card::CQ};
-    std::list<Card> viable_cards = gameplay.get_viable_cards(Card::H8, remaining_cards);
-
-    std::list<Card> true_viable_cards = {Card::H9, Card::DJ, Card::HJ};
-    REQUIRE(viable_cards == true_viable_cards);
+    REQUIRE(clubs_in_deck == true);
+    REQUIRE(diamonds_in_deck == false);
 }
 
-TEST_CASE( "get_viable_cards not trump", "[skat]")
+TEST_CASE( "color_in_deck joker", "[skat]")
 {
+    std::list<Card> deck = {Card::CJ};
+    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
+    bool clubs_in_deck = GamePlay::color_in_deck(3, b_deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, b_deck);
 
-    GamePlay gameplay = GamePlay(Trump::Hearts);
-    std::list<Card> remaining_cards = {Card::H9, Card::D7, Card::DJ, Card::HJ, Card::CQ};
-    std::list<Card> viable_cards = gameplay.get_viable_cards(Card::D8, remaining_cards);
-
-    std::list<Card> true_viable_cards = {Card::D7};
-    REQUIRE(viable_cards == true_viable_cards);
+    REQUIRE(clubs_in_deck == false);
+    REQUIRE(diamonds_in_deck == false);
 }
 
 TEST_CASE( "get_winner", "[skat]")
@@ -61,48 +62,24 @@ TEST_CASE( "get_winner", "[skat]")
     REQUIRE(winner == 1);
 }
 
-TEST_CASE( "get_next_plays", "[skat]")
+TEST_CASE( "get_winner 2", "[skat]")
 {
-    GamePlay gameplay = GamePlay(Trump::Diamonds,
-                                 {Card::D8, Card::C8},
-                                 {Card::S10, Card::SA},
-                                 {Card::D10, Card::C9});
-
-    std::list<std::list<Card>> next_plays = gameplay.get_next_plays();
-    std::list<std::list<Card>> true_next_plays = {
-            {Card::D8, Card::S10, Card::D10},
-            {Card::D8, Card::SA, Card::D10},
-            {Card::C8, Card::S10, Card::C9},
-            {Card::C8, Card::SA, Card::C9}
-    };
-
-    REQUIRE(next_plays == true_next_plays);
+    GamePlay gamePlay = GamePlay(Trump::Diamonds);
+    Card cards[] = {Card::DA, Card::C9, Card::CJ};
+    int winner = gamePlay.get_winner(cards);
+    REQUIRE(winner == 2);
 }
 
-TEST_CASE( "get_next_plays empty", "[skat]")
-{
-    GamePlay gameplay = GamePlay(Trump::Diamonds,
-                                 {},
-                                 {},
-                                 {});
-
-    std::list<std::list<Card>> next_plays = gameplay.get_next_plays();
-    std::list<std::list<Card>> true_next_plays = {
-    };
-
-    REQUIRE(next_plays == true_next_plays);
-}
-
-TEST_CASE( "minmax no counterplay", "[minmax]")
+TEST_CASE( "minmax no counterplay possible", "[minmax]")
 {
     GamePlay gamePlay = GamePlay(0,
              Trump::Diamonds,
              {Card::CJ, Card::HJ},
-             {Card::SJ, Card::SA},
+             {Card::DK, Card::SA},
              {Card::D10, Card::C9});
     MinMax minMax = MinMax(gamePlay);
     int max = minMax.max(0,0);
-    REQUIRE(max == 27);
+    REQUIRE(max == 29);
 }
 
 TEST_CASE( "minmax counterplay", "[minmax]")

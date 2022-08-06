@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include <cstdio>
+#include <bitset>
 
 #ifndef SKATMINMAX_SKAT_H
 #define SKATMINMAX_SKAT_H
@@ -25,9 +26,9 @@ enum class Trump {
 
 class GamePlay
 {
-    std::list<Card> forehandCards;
-    std::list<Card> midhandCards;
-    std::list<Card> backhandCards;
+    std::bitset<32> forehandCards;
+    std::bitset<32> midhandCards;
+    std::bitset<32> backhandCards;
 
     std::vector<Card> playedCards;
 
@@ -44,29 +45,26 @@ public:
              std::list<Card> backhandCards);
     GamePlay(int max_player, Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
              std::list<Card> backhandCards);
-    void set_played_cards(std::list<Card> played_cards);
-    void set_current_starter(int starter);
-    void add_played_card(Card played_card);
+    static std::bitset<32> card_list_to_bitset(std::list<Card> cards);
+    static bool is_joker(Card card);
+    static int get_color_of_card(Card card);
+    static bool joker_in_deck(std::bitset<32> deck);
+    static bool color_in_deck(int color, std::bitset<32> deck);
+    static std::bitset<32> get_color_and_jokers(int color, std::bitset<32> cards);
+    static std::bitset<32> get_color(int color, std::bitset<32> cards);
+
     bool is_trump(Card card);
-    bool is_joker(Card card);
     bool is_new_play();
     int get_current_player();
     int get_winner(Card cards[3]);
     int get_previous_player();
     int get_better_card(Card first_card, Card second_card);
-    bool joker_in_deck(std::list<Card> deck);
-    bool color_in_deck(int color, std::list<Card> deck);
+    std::bitset<32> get_viable_cards(Card first_card, std::bitset<32> remaining_cards);
+
     Card get_first_card();
-    int get_color_of_card(Card card);
-    std::list<Card> get_color_and_jokers(int color, std::list<Card> cards);
-    std::list<Card> get_color(int color, std::list<Card> cards);
-    std::list<Card> get_viable_cards(Card first_card, std::list<Card> remaining_cards);
-    std::list<Card> get_possible_next_moves();
+    std::bitset<32> get_possible_next_moves();
     void make_move(Card move);
     void revert_move();
-    std::list<std::list<Card>> get_next_plays();
-    void make_play(std::list<Card> play);
-    void revert_play();
     int get_points_of_card(Card card);
     int get_points_of_hand(Card play[3]);
     int eval();

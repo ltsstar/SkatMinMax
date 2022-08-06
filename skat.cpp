@@ -13,34 +13,34 @@ GamePlay::GamePlay(Trump trump, std::list<Card> forehandCards, std::list<Card> m
 std::list<Card> backhandCards)
 {
     this->trump = trump;
-    this->forehandCards = forehandCards;
-    this->midhandCards = midhandCards;
-    this->backhandCards = backhandCards;
+    this->forehandCards = card_list_to_bitset(forehandCards);
+    this->midhandCards = card_list_to_bitset(midhandCards);
+    this->backhandCards = card_list_to_bitset(backhandCards);
 }
 
 GamePlay::GamePlay(int max_player, Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
                    std::list<Card> backhandCards) {
     this->maxPlayer = max_player;
     this->trump = trump;
-    this->forehandCards = forehandCards;
-    this->midhandCards = midhandCards;
-    this->backhandCards = backhandCards;
+    this->forehandCards = card_list_to_bitset(forehandCards);
+    this->midhandCards = card_list_to_bitset(midhandCards);
+    this->backhandCards = card_list_to_bitset(backhandCards);
 }
 
-void GamePlay::add_played_card(Card played_card) {
-    this->playedCards.push_back(played_card);
-}
-
-void GamePlay::set_played_cards(std::list<Card> played_cards) {
-    std::vector<Card> played_cards_vector(played_cards.size());
-    std::copy(played_cards.begin(), played_cards.end(), played_cards_vector.begin());
-    this->playedCards = played_cards_vector;
+std::bitset<32> GamePlay::card_list_to_bitset(std::list<Card> cards)
+{
+    std::bitset<32> result;
+    for(auto const& card : cards)
+    {
+        result |= std::bitset<32>(1) << static_cast<int>(card);
+    }
+    return result;
 }
 
 bool GamePlay::is_trump(Card card)
 {
     int int_card = static_cast<int>(card);
-    return int_card / 8 == static_cast<int>(trump) || this->is_joker(card);
+    return int_card / 8 == static_cast<int>(trump) || is_joker(card);
 }
 
 bool GamePlay::is_joker(Card card)
@@ -50,31 +50,32 @@ bool GamePlay::is_joker(Card card)
 
 int GamePlay::get_better_card(Card first_card, Card second_card)
 {
-    if(first_card == Card::CJ || second_card == Card::CJ)
-        int a = 5;
-    if(this->is_trump(first_card) && !this->is_trump(second_card))
+    bool first_card_trump = is_trump(first_card);
+    bool second_card_trump = is_trump(second_card);
+
+    if(first_card_trump && !second_card_trump)
     {
         return 0;
-    } else if(!this->is_trump(first_card) && this->is_trump(second_card))
+    } else if(!first_card_trump && second_card_trump)
     {
         return 1;
-    } else if(this->is_trump(first_card) && this->is_trump(second_card))
+    } else if(first_card_trump && second_card_trump)
     {
-        if(this->is_joker(first_card) && this->is_joker(second_card))
-        {
-            return static_cast<int>(second_card) > static_cast<int>(first_card);
-        } else if(!this->is_joker(first_card) && this->is_joker(second_card))
+        bool first_card_joker = is_joker(first_card);
+        bool second_card_joker = is_joker(second_card);
+
+        if(!first_card_joker && second_card_joker)
         {
             return 1;
-        } else if(this->is_joker(first_card) && !this->is_joker(second_card)) {
+        } else if(first_card_joker && !second_card_joker) {
             return 0;
-        } else if(!this->is_joker(first_card) && !this->is_joker(second_card))
+        } else
         {
             return static_cast<int>(second_card) > static_cast<int>(first_card);
         }
-    } else if(!this->is_trump(first_card) && !this->is_trump(second_card))
+    } else // else if(!this->is_trump(first_card) && !this->is_trump(second_card))
     {
-        if(this->get_color_of_card(first_card) == this->get_color_of_card(second_card))
+        if(get_color_of_card(first_card) == get_color_of_card(second_card))
         {
             return static_cast<int>(second_card) > static_cast<int>(first_card);
         } else {
@@ -87,19 +88,19 @@ int GamePlay::get_winner(Card cards[3])
 {
     int first_winner = get_better_card(cards[0], cards[1]);
     int second_winner = get_better_card(cards[first_winner], cards[2]);
-    return first_winner + second_winner;
+    return first_winner + 2 * second_winner;
 }
 
 bool GamePlay::is_new_play()
 {
-    return !(this->playedCards.size() % 3);
+    return !(playedCards.size() % 3);
 }
 
 int GamePlay::get_current_player() {
-    if(this->playedCards.size() > 2)
+    if(playedCards.size() > 2)
     {
-        int last_winner = winners[this->playedCards.size() / 3 - 1];
-        return (last_winner + this->playedCards.size() % 3) % 3;
+        int last_winner = winners[playedCards.size() / 3 - 1];
+        return (last_winner + playedCards.size() % 3) % 3;
     } else {
         return playedCards.size();
     }
@@ -107,7 +108,7 @@ int GamePlay::get_current_player() {
 
 Card GamePlay::get_first_card()
 {
-    return this->playedCards[(this->playedCards.size() - 1) / 3 * 3];
+    return playedCards[(playedCards.size() - 1) / 3 * 3];
 }
 
 int GamePlay::get_color_of_card(Card card)
@@ -115,39 +116,21 @@ int GamePlay::get_color_of_card(Card card)
     return static_cast<int>(card) / 8;
 }
 
-bool GamePlay::color_in_deck(int color, std::list<Card> deck)
+bool GamePlay::color_in_deck(int color, std::bitset<32> deck)
 {
-    for(auto const& card : deck)
-    {
-        int remainder = static_cast<int>(card) - (8*color);
-        // excludes jokers!
-        if(0 <= remainder && remainder < 7)
-            return true;
-    }
-    return false;
+    return get_color(color, deck).any();
 }
 
-bool GamePlay::joker_in_deck(std::list<Card> deck)
+bool GamePlay::joker_in_deck(std::bitset<32> deck)
 {
-    for(auto const& card : deck)
-    {
-        if((static_cast<int>(card) + 1) % 8 == 0)
-            return true;
-    }
-    return false;
+    const std::bitset<32> jokers = 0b10000000100000001000000010000000;
+    return (deck & jokers).any();
 }
 
-std::list<Card> GamePlay::get_color_and_jokers(int color, std::list<Card> cards)
+std::bitset<32> GamePlay::get_color_and_jokers(int color, std::bitset<32> cards)
 {
-    std::list<Card> results;
-    for(auto const& card : cards)
-    {
-        if(this->get_color_of_card(card) == color)
-            results.push_back(card);
-        else if(this->is_joker(card))
-            results.push_back(card);
-    }
-    return results;
+    const std::bitset<32> jokers = 0b10000000100000001000000010000000;
+    return get_color(color, cards) | (jokers & cards);
 }
 
 /**
@@ -156,46 +139,42 @@ std::list<Card> GamePlay::get_color_and_jokers(int color, std::list<Card> cards)
  * @param cards
  * @return
  */
-std::list<Card> GamePlay::get_color(int color, std::list<Card> cards)
+std::bitset<32> GamePlay::get_color(int color, std::bitset<32> cards)
 {
-    std::list<Card> results;
-    for(auto const& card : cards)
-    {
-        if(this->get_color_of_card(card) == color && !this->is_joker(card))
-            results.push_back(card);
-    }
-    return results;
+    const std::bitset<32> diamonds =0b00000000000000000000000001111111;
+    std::bitset<32> color_shift = diamonds << 8*color;
+    return cards & color_shift;
 }
 
-std::list<Card> GamePlay::get_viable_cards(Card first_card, std::list<Card> remaining_cards)
+std::bitset<32> GamePlay::get_viable_cards(Card first_card, std::bitset<32> remaining_cards)
 {
-    int first_card_color = this->get_color_of_card(first_card);
-    bool is_trump = this->is_trump(first_card);
-    if(is_trump)
+    int first_card_color = get_color_of_card(first_card);
+    bool trump = is_trump(first_card);
+    if(trump)
     {
-        bool has_trump = this->color_in_deck(static_cast<int>(this->trump), remaining_cards) || this->joker_in_deck(remaining_cards);
+        bool has_trump = color_in_deck(static_cast<int>(trump), remaining_cards) || joker_in_deck(remaining_cards);
         if(has_trump)
         {
-            return this->get_color_and_jokers(static_cast<int>(this->trump), remaining_cards);
+            return get_color_and_jokers(static_cast<int>(trump), remaining_cards);
         } else {
             return remaining_cards;
         }
     } else {
-        bool has_color = this->color_in_deck(first_card_color, remaining_cards);
+        bool has_color = color_in_deck(first_card_color, remaining_cards);
         if(has_color)
         {
-            return this->get_color(first_card_color, remaining_cards);
+            return get_color(first_card_color, remaining_cards);
         } else {
             return remaining_cards;
         }
     }
 }
 
-std::list<Card> GamePlay::get_possible_next_moves()
+std::bitset<32> GamePlay::get_possible_next_moves()
 {
-    bool new_play = this->is_new_play();
-    int current_player = this->get_current_player();
-    std::list<Card> current_player_cards;
+    bool new_play = is_new_play();
+    int current_player = get_current_player();
+    std::bitset<32> current_player_cards;
 
     if(current_player == 0) {
         current_player_cards = forehandCards;
@@ -208,7 +187,7 @@ std::list<Card> GamePlay::get_possible_next_moves()
         return current_player_cards;
     } else
     {
-        return this->get_viable_cards(this->get_first_card(),current_player_cards);
+        return get_viable_cards(get_first_card(),current_player_cards);
     }
 }
 
@@ -219,13 +198,13 @@ void GamePlay::make_move(Card move) {
     playedCards.push_back(move);
     if(player == 0)
     {
-        forehandCards.remove(move);
+        forehandCards  ^= std::bitset<32>(1) << static_cast<int>(move);
     } else if (player == 1)
     {
-        midhandCards.remove(move);
-    } else if (player == 2)
+        midhandCards  ^= std::bitset<32>(1) << static_cast<int>(move);
+    } else // if (player == 2)
     {
-        backhandCards.remove(move);
+        backhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
     }
 
     // eval winner
@@ -260,18 +239,18 @@ int GamePlay::get_previous_player()
 }
 
 void GamePlay::revert_move() {
-    Card move = this->playedCards.back();
+    Card move = playedCards.back();
     int last_player = get_previous_player();
 
     if(last_player == 0)
     {
-        this->forehandCards.push_back(move);
+        forehandCards ^= std::bitset<32>(1) << static_cast<int>(move);
     } else if(last_player == 1)
     {
-        this->midhandCards.push_back(move);
-    } else if(last_player == 2)
+        midhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
+    } else // if(last_player == 2)
     {
-        this->backhandCards.push_back(move);
+        backhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
     }
 
 
@@ -282,29 +261,6 @@ void GamePlay::revert_move() {
     }
 
     this->playedCards.pop_back();
-}
-
-std::list<std::list<Card>> GamePlay::get_next_plays()
-{
-    std::list<std::list<Card>> result;
-    std::list<Card> next_first_moves = this->get_possible_next_moves();
-    for(auto const& next_first_move : next_first_moves)
-    {
-        this->make_move(next_first_move);
-        std::list<Card> next_second_moves = this->get_possible_next_moves();
-        for(auto const& next_second_move : next_second_moves)
-        {
-            this->make_move(next_second_move);
-            std::list<Card> next_third_moves = this->get_possible_next_moves();
-            for(auto const& next_third_move : next_third_moves)
-            {
-                result.push_back({next_first_move, next_second_move, next_third_move});
-            }
-            this->revert_move();
-        }
-        this->revert_move();
-    }
-    return result;
 }
 
 int GamePlay::get_points_of_card(Card card)
@@ -327,7 +283,7 @@ int GamePlay::get_points_of_hand(Card play[3])
     int res = 0;
     for(int i=0;i<3;++i)
     {
-        res += this->get_points_of_card(play[i]);
+        res += get_points_of_card(play[i]);
     }
     return res;
 }

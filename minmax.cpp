@@ -9,27 +9,30 @@ MinMax::MinMax(GamePlay gamePlay) :
 }
 
 int MinMax::max(int alpha, int beta) {
-    std::list<Card> next_moves = this->gamePlay.get_possible_next_moves();
-    if(next_moves.size() == 0)
+    std::bitset<32> next_moves = gamePlay.get_possible_next_moves();
+    if(next_moves.none())
     {
         return this->gamePlay.eval();
     }
     int maxValue = -1;
     Card maxMove;
-    for(auto const& move : next_moves)
+    for(int i=0;i<32;++i)
     {
-        this->gamePlay.make_move(move);
+        if((next_moves & (std::bitset<32>(1) << i)).none())
+            continue;
+
+        this->gamePlay.make_move(static_cast<Card>(i));
         int value = 0;
-        if(this->gamePlay.get_current_player() == this->gamePlay.getMaxPlayer())
+        if(gamePlay.get_current_player() == gamePlay.getMaxPlayer())
         {
-            value = this->max(alpha + 1, 0);
+            value = max(alpha + 1, 0);
         } else {
-            value = this->min(alpha + 1, 0);
+            value = min(alpha + 1, 0);
         }
         if(value > maxValue)
         {
             maxValue = value;
-            maxMove = move;
+            //maxMove = move;
         }
         this->gamePlay.revert_move();
     }
@@ -37,27 +40,30 @@ int MinMax::max(int alpha, int beta) {
 }
 
 int MinMax::min(int alpha, int beta) {
-    std::list<Card> next_moves = this->gamePlay.get_possible_next_moves();
-    if(next_moves.size() == 0)
+    std::bitset<32> next_moves = gamePlay.get_possible_next_moves();
+    if(next_moves.none())
     {
         return this->gamePlay.eval();
     }
     int minValue = 121;
     Card minMove;
-    for(auto const& move : next_moves)
+    for(int i=0;i<32;++i)
     {
-        this->gamePlay.make_move(move);
+        if((next_moves & (std::bitset<32>(1) << i)).none())
+            continue;
+
+        gamePlay.make_move(static_cast<Card>(i));
         int value = 0;
-        if(this->gamePlay.get_current_player() == this->gamePlay.getMaxPlayer())
+        if(gamePlay.get_current_player() == gamePlay.getMaxPlayer())
         {
-            value = this->max(alpha + 1, 0);
+            value = max(alpha + 1, 0);
         } else {
-            value = this->min(alpha + 1, 0);
+            value = min(alpha + 1, 0);
         }
         if(value < minValue)
         {
             minValue = value;
-            minMove = move;
+            //minMove = move;
         }
         this->gamePlay.revert_move();
     }
