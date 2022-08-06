@@ -37,6 +37,16 @@ std::bitset<32> GamePlay::card_list_to_bitset(std::list<Card> cards)
     return result;
 }
 
+std::vector<Card> GamePlay::bitset_to_card_vector(std::bitset<32> deck)
+{
+    std::vector<Card> cards;
+    for (size_t k = 0; k < 32; ++k) {
+        if((deck & (std::bitset<32>(1) << k)).any())
+            cards.push_back(static_cast<Card>(k));
+    }
+    return cards;
+}
+
 bool GamePlay::is_trump(Card card)
 {
     int int_card = static_cast<int>(card);
@@ -149,8 +159,8 @@ std::bitset<32> GamePlay::get_color(int color, std::bitset<32> cards)
 std::bitset<32> GamePlay::get_viable_cards(Card first_card, std::bitset<32> remaining_cards)
 {
     int first_card_color = get_color_of_card(first_card);
-    bool trump = is_trump(first_card);
-    if(trump)
+    bool trump_played = is_trump(first_card);
+    if(trump_played)
     {
         bool has_trump = color_in_deck(static_cast<int>(trump), remaining_cards) || joker_in_deck(remaining_cards);
         if(has_trump)

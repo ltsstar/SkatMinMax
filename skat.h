@@ -46,6 +46,7 @@ public:
     GamePlay(int max_player, Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
              std::list<Card> backhandCards);
     static std::bitset<32> card_list_to_bitset(std::list<Card> cards);
+    static std::vector<Card> bitset_to_card_vector(std::bitset<32> deck);
     static bool is_joker(Card card);
     static int get_color_of_card(Card card);
     static bool joker_in_deck(std::bitset<32> deck);

@@ -14,14 +14,12 @@ int MinMax::max(int alpha, int beta) {
     {
         return this->gamePlay.eval();
     }
+    std::vector<Card> next_moves_vec = GamePlay::bitset_to_card_vector(next_moves);
     int maxValue = -1;
     Card maxMove;
-    for(int i=0;i<32;++i)
+    for(auto const& card : next_moves_vec)
     {
-        if((next_moves & (std::bitset<32>(1) << i)).none())
-            continue;
-
-        this->gamePlay.make_move(static_cast<Card>(i));
+        this->gamePlay.make_move(card);
         int value = 0;
         if(gamePlay.get_current_player() == gamePlay.getMaxPlayer())
         {
@@ -45,14 +43,12 @@ int MinMax::min(int alpha, int beta) {
     {
         return this->gamePlay.eval();
     }
+    std::vector<Card> next_moves_vec = GamePlay::bitset_to_card_vector(next_moves);
     int minValue = 121;
     Card minMove;
-    for(int i=0;i<32;++i)
+    for(auto const& card : next_moves_vec)
     {
-        if((next_moves & (std::bitset<32>(1) << i)).none())
-            continue;
-
-        gamePlay.make_move(static_cast<Card>(i));
+        gamePlay.make_move(card);
         int value = 0;
         if(gamePlay.get_current_player() == gamePlay.getMaxPlayer())
         {
