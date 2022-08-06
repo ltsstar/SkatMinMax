@@ -9,42 +9,22 @@ GamePlay::GamePlay(Trump trump) {
     this->trump = trump;
 }
 
-GamePlay::GamePlay(Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
-std::list<Card> backhandCards)
+GamePlay::GamePlay(Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
+std::vector<Card> backhandCards)
 {
     this->trump = trump;
-    this->forehandCards = card_list_to_bitset(forehandCards);
-    this->midhandCards = card_list_to_bitset(midhandCards);
-    this->backhandCards = card_list_to_bitset(backhandCards);
+    this->forehandCards = forehandCards;
+    this->midhandCards = midhandCards;
+    this->backhandCards = backhandCards;
 }
 
-GamePlay::GamePlay(int max_player, Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
-                   std::list<Card> backhandCards) {
+GamePlay::GamePlay(int max_player, Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
+                   std::vector<Card> backhandCards) {
     this->maxPlayer = max_player;
     this->trump = trump;
-    this->forehandCards = card_list_to_bitset(forehandCards);
-    this->midhandCards = card_list_to_bitset(midhandCards);
-    this->backhandCards = card_list_to_bitset(backhandCards);
-}
-
-std::bitset<32> GamePlay::card_list_to_bitset(std::list<Card> cards)
-{
-    std::bitset<32> result;
-    for(auto const& card : cards)
-    {
-        result |= std::bitset<32>(1) << static_cast<int>(card);
-    }
-    return result;
-}
-
-std::vector<Card> GamePlay::bitset_to_card_vector(std::bitset<32> deck)
-{
-    std::vector<Card> cards;
-    for (size_t k = 0; k < 32; ++k) {
-        if((deck & (std::bitset<32>(1) << k)).any())
-            cards.push_back(static_cast<Card>(k));
-    }
-    return cards;
+    this->forehandCards = forehandCards;
+    this->midhandCards = midhandCards;
+    this->backhandCards = backhandCards;
 }
 
 bool GamePlay::is_trump(Card card)
@@ -98,7 +78,7 @@ int GamePlay::get_winner(Card cards[3])
 {
     int first_winner = get_better_card(cards[0], cards[1]);
     int second_winner = get_better_card(cards[first_winner], cards[2]);
-    return first_winner + 2 * second_winner;
+    return second_winner ? 2 : first_winner;
 }
 
 bool GamePlay::is_new_play()
@@ -126,37 +106,52 @@ int GamePlay::get_color_of_card(Card card)
     return static_cast<int>(card) / 8;
 }
 
-bool GamePlay::color_in_deck(int color, std::bitset<32> deck)
+bool GamePlay::color_in_deck(int color, std::vector<Card> deck)
 {
-    return get_color(color, deck).any();
+    for(Card card : deck)
+    {
+        if(get_color_of_card(card) == color)
+            return true;
+    }
+    return false;
 }
 
-bool GamePlay::joker_in_deck(std::bitset<32> deck)
+bool GamePlay::joker_in_deck(std::vector<Card> deck)
 {
-    const std::bitset<32> jokers = 0b10000000100000001000000010000000;
-    return (deck & jokers).any();
+    for(Card card : deck)
+    {
+        if(is_joker(card))
+            return true;
+    }
+    return false;
 }
 
-std::bitset<32> GamePlay::get_color_and_jokers(int color, std::bitset<32> cards)
+std::vector<Card> GamePlay::get_color_and_jokers(int color, std::vector<Card> deck)
 {
-    const std::bitset<32> jokers = 0b10000000100000001000000010000000;
-    return get_color(color, cards) | (jokers & cards);
+    std::vector<Card> result;
+    for(Card card : deck)
+    {
+        if(get_color_of_card(card) == color)
+            result.push_back(card);
+        else if(is_joker(card))
+            result.push_back(card);
+    }
+    return result;
 }
 
-/**
- * Gets colors in deck WITHOUT JOKERS
- * @param color
- * @param cards
- * @return
- */
-std::bitset<32> GamePlay::get_color(int color, std::bitset<32> cards)
+std::vector<Card> GamePlay::get_color(int color, std::vector<Card> deck)
 {
-    const std::bitset<32> diamonds =0b00000000000000000000000001111111;
-    std::bitset<32> color_shift = diamonds << 8*color;
-    return cards & color_shift;
+    // without jokers!
+    std::vector<Card> result;
+    for(Card card : deck)
+    {
+        if(get_color_of_card(card) == color)
+            result.push_back(card);
+    }
+    return result;
 }
 
-std::bitset<32> GamePlay::get_viable_cards(Card first_card, std::bitset<32> remaining_cards)
+std::vector<Card> GamePlay::get_viable_cards(Card first_card, std::vector<Card> remaining_cards)
 {
     int first_card_color = get_color_of_card(first_card);
     bool trump_played = is_trump(first_card);
@@ -180,11 +175,11 @@ std::bitset<32> GamePlay::get_viable_cards(Card first_card, std::bitset<32> rema
     }
 }
 
-std::bitset<32> GamePlay::get_possible_next_moves()
+std::vector<Card> GamePlay::get_possible_next_moves()
 {
     bool new_play = is_new_play();
     int current_player = get_current_player();
-    std::bitset<32> current_player_cards;
+    std::vector<Card> current_player_cards;
 
     if(current_player == 0) {
         current_player_cards = forehandCards;
@@ -208,13 +203,13 @@ void GamePlay::make_move(Card move) {
     playedCards.push_back(move);
     if(player == 0)
     {
-        forehandCards  ^= std::bitset<32>(1) << static_cast<int>(move);
+        forehandCards.erase(std::remove(forehandCards.begin(), forehandCards.end(), move), forehandCards.end());
     } else if (player == 1)
     {
-        midhandCards  ^= std::bitset<32>(1) << static_cast<int>(move);
+        midhandCards.erase(std::remove(midhandCards.begin(), midhandCards.end(), move), midhandCards.end());
     } else // if (player == 2)
     {
-        backhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
+        backhandCards.erase(std::remove(backhandCards.begin(), backhandCards.end(), move), backhandCards.end());
     }
 
     // eval winner
@@ -254,13 +249,13 @@ void GamePlay::revert_move() {
 
     if(last_player == 0)
     {
-        forehandCards ^= std::bitset<32>(1) << static_cast<int>(move);
+        forehandCards.push_back(move);
     } else if(last_player == 1)
     {
-        midhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
+        midhandCards.push_back(move);
     } else // if(last_player == 2)
     {
-        backhandCards ^= std::bitset<32>(1) << static_cast<int>(move);
+        backhandCards.push_back(move);
     }
 
 

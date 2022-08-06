@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdio>
 #include <bitset>
+#include <algorithm>
 
 #ifndef SKATMINMAX_SKAT_H
 #define SKATMINMAX_SKAT_H
@@ -26,9 +27,9 @@ enum class Trump {
 
 class GamePlay
 {
-    std::bitset<32> forehandCards;
-    std::bitset<32> midhandCards;
-    std::bitset<32> backhandCards;
+    std::vector<Card> forehandCards;
+    std::vector<Card> midhandCards;
+    std::vector<Card> backhandCards;
 
     std::vector<Card> playedCards;
 
@@ -41,18 +42,17 @@ public:
 
 public:
     GamePlay(Trump trump);
-    GamePlay(Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
-             std::list<Card> backhandCards);
-    GamePlay(int max_player, Trump trump, std::list<Card> forehandCards, std::list<Card> midhandCards,
-             std::list<Card> backhandCards);
-    static std::bitset<32> card_list_to_bitset(std::list<Card> cards);
-    static std::vector<Card> bitset_to_card_vector(std::bitset<32> deck);
+    GamePlay(Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
+             std::vector<Card> backhandCards);
+    GamePlay(int max_player, Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
+             std::vector<Card> backhandCards);
+
     static bool is_joker(Card card);
     static int get_color_of_card(Card card);
-    static bool joker_in_deck(std::bitset<32> deck);
-    static bool color_in_deck(int color, std::bitset<32> deck);
-    static std::bitset<32> get_color_and_jokers(int color, std::bitset<32> cards);
-    static std::bitset<32> get_color(int color, std::bitset<32> cards);
+    static bool joker_in_deck(std::vector<Card> deck);
+    static bool color_in_deck(int color, std::vector<Card> deck);
+    static std::vector<Card> get_color_and_jokers(int color, std::vector<Card> deck);
+    static std::vector<Card> get_color(int color, std::vector<Card> deck);
 
     bool is_trump(Card card);
     bool is_new_play();
@@ -60,10 +60,10 @@ public:
     int get_winner(Card cards[3]);
     int get_previous_player();
     int get_better_card(Card first_card, Card second_card);
-    std::bitset<32> get_viable_cards(Card first_card, std::bitset<32> remaining_cards);
+    std::vector<Card> get_viable_cards(Card first_card, std::vector<Card> remaining_cards);
 
     Card get_first_card();
-    std::bitset<32> get_possible_next_moves();
+    std::vector<Card> get_possible_next_moves();
     void make_move(Card move);
     void revert_move();
     int get_points_of_card(Card card);

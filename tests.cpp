@@ -7,37 +7,33 @@
 
 TEST_CASE( "joker_in_deck", "[skat]")
 {
-    std::list<Card> deck = {Card::D7, Card::SQ, Card::SJ, Card::CJ, Card::C7};
-    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
-    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
+    std::vector<Card> deck = {Card::D7, Card::SQ, Card::SJ, Card::CJ, Card::C7};
+    bool joker_in_deck = GamePlay::joker_in_deck(deck);
 
     REQUIRE(joker_in_deck == true);
 }
 
 TEST_CASE( "joker_in_deck 2", "[skat]")
 {
-    std::list<Card> deck = {Card::DJ};
-    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
-    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
+    std::vector<Card> deck = {Card::DJ};
+    bool joker_in_deck = GamePlay::joker_in_deck(deck);
 
     REQUIRE(joker_in_deck == true);
 }
 
 TEST_CASE( "joker_in_deck 3", "[skat]")
 {
-    std::list<Card> deck = {Card::C7};
-    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
-    bool joker_in_deck = GamePlay::joker_in_deck(b_deck);
+    std::vector<Card> deck = {Card::C7};
+    bool joker_in_deck = GamePlay::joker_in_deck(deck);
 
     REQUIRE(joker_in_deck == false);
 }
 
 TEST_CASE( "color_in_deck normal", "[skat]")
 {
-    std::list<Card> deck = {Card::C7};
-    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
-    bool clubs_in_deck = GamePlay::color_in_deck(3, b_deck);
-    bool diamonds_in_deck = GamePlay::color_in_deck(0, b_deck);
+    std::vector<Card> deck = {Card::C7};
+    bool clubs_in_deck = GamePlay::color_in_deck(3, deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, deck);
 
     REQUIRE(clubs_in_deck == true);
     REQUIRE(diamonds_in_deck == false);
@@ -45,10 +41,9 @@ TEST_CASE( "color_in_deck normal", "[skat]")
 
 TEST_CASE( "color_in_deck joker", "[skat]")
 {
-    std::list<Card> deck = {Card::CJ};
-    std::bitset<32> b_deck = GamePlay::card_list_to_bitset(deck);
-    bool clubs_in_deck = GamePlay::color_in_deck(3, b_deck);
-    bool diamonds_in_deck = GamePlay::color_in_deck(0, b_deck);
+    std::vector<Card> deck = {Card::CJ};
+    bool clubs_in_deck = GamePlay::color_in_deck(3, deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, deck);
 
     REQUIRE(clubs_in_deck == false);
     REQUIRE(diamonds_in_deck == false);
@@ -117,6 +112,19 @@ TEST_CASE( "minmax big game", "[minmax]")
     int max = minMax.max(0,0);
     REQUIRE(max == 2);
 }
+
+TEST_CASE( "minmax big game 2", "[minmax]")
+{
+    GamePlay gamePlay = GamePlay(0,
+                                 Trump::Diamonds,
+                                 {Card::CJ, Card::SJ, Card::DJ, Card::C10, Card::C9, Card::S10, Card::SQ, Card::DA, Card::D10, Card::DQ},
+                                 {Card::HJ, Card::CQ, Card::C8, Card::C7, Card::SA, Card::S7, Card::HA, Card::H8, Card::DK, Card::D8},
+                                 {Card::CA, Card::CK, Card::SK, Card::S9, Card::S8, Card::H10, Card::H9, Card::H7, Card::D9, Card::D7});
+    MinMax minMax = MinMax(gamePlay);
+    int max = minMax.max(0,0);
+    REQUIRE(max == 2);
+}
+
 
 TEST_CASE( "minmax safe total win", "[minmax]")
 {
