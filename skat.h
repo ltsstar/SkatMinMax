@@ -7,6 +7,8 @@
 #include <cstdio>
 #include <bitset>
 #include <algorithm>
+#include <set>
+#include <stdexcept>
 
 #ifndef SKATMINMAX_SKAT_H
 #define SKATMINMAX_SKAT_H
@@ -27,32 +29,36 @@ enum class Trump {
 
 class GamePlay
 {
-    std::vector<Card> forehandCards;
-    std::vector<Card> midhandCards;
-    std::vector<Card> backhandCards;
+
+
+public:
+    std::set<Card> forehandCards;
+    std::set<Card> midhandCards;
+    std::set<Card> backhandCards;
 
     std::vector<Card> playedCards;
 
     Trump trump;
     int maxPlayer;
     std::vector<int> winners;
-
-public:
     int getMaxPlayer() const;
 
 public:
     GamePlay(Trump trump);
-    GamePlay(Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
-             std::vector<Card> backhandCards);
-    GamePlay(int max_player, Trump trump, std::vector<Card> forehandCards, std::vector<Card> midhandCards,
-             std::vector<Card> backhandCards);
+    GamePlay(Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
+             std::set<Card> backhandCards);
+    GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
+             std::set<Card> backhandCards);
+    GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
+             std::set<Card> backhandCards, std::vector<Card> playedCards, std::vector<int> winners);
+    bool cards_sanity(std::set<Card> forehandCards, std::set<Card> midhandCards, std::set<Card> backhandCards, std::vector<Card> playedCards);
 
     static bool is_joker(Card card);
     static int get_color_of_card(Card card);
-    static bool joker_in_deck(std::vector<Card> deck);
-    static bool color_in_deck(int color, std::vector<Card> deck);
-    static std::vector<Card> get_color_and_jokers(int color, std::vector<Card> deck);
-    static std::vector<Card> get_color(int color, std::vector<Card> deck);
+    static bool joker_in_deck(std::set<Card> deck);
+    static bool color_in_deck(int color, std::set<Card> deck);
+    static std::set<Card> get_color_and_jokers(int color, std::set<Card> deck);
+    static std::set<Card> get_color(int color, std::set<Card> deck);
 
     bool is_trump(Card card);
     bool is_new_play();
@@ -60,10 +66,10 @@ public:
     int get_winner(Card cards[3]);
     int get_previous_player();
     int get_better_card(Card first_card, Card second_card);
-    std::vector<Card> get_viable_cards(Card first_card, std::vector<Card> remaining_cards);
+    std::set<Card> get_viable_cards(Card first_card, std::set<Card> remaining_cards);
 
     Card get_first_card();
-    std::vector<Card> get_possible_next_moves();
+    std::set<Card> get_possible_next_moves();
     void make_move(Card move);
     void revert_move();
     int get_points_of_card(Card card);
