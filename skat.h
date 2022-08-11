@@ -36,6 +36,8 @@ public:
     std::set<Card> midhandCards;
     std::set<Card> backhandCards;
 
+    int points[10];
+
     std::vector<Card> playedCards;
 
     Trump trump;
@@ -75,6 +77,7 @@ public:
     void revert_move();
     int get_points_of_card(Card card);
     int get_points_of_hand(Card play[3]);
+    std::pair<int, int> eval_depth(int depth, int start_player);
     int eval();
 };
 

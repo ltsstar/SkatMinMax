@@ -334,6 +334,23 @@ int GamePlay::get_points_of_hand(Card play[3])
     return res;
 }
 
+std::pair<int, int> GamePlay::eval_depth(int depth, int start_player)
+{
+    int result = 0;
+    Card first_card = playedCards[depth-2];
+    Card second_card = playedCards[depth-1];
+    Card third_card = playedCards[depth];
+
+    Card play[3] = {first_card, second_card, third_card};
+    int winner = this->get_winner(play);
+    if((winner + start_player) % 3 == maxPlayer)
+    {
+        return std::pair<int, int>((winner + start_player) % 3, this->get_points_of_hand(play));
+    } else {
+        return std::pair<int, int>((winner + start_player) % 3, 0);
+    }
+}
+
 int GamePlay::eval() {
     int result = 0;
     int start_player = 0;

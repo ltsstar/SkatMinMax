@@ -6,10 +6,12 @@
 MinMax::MinMax(GamePlay gamePlay) :
         gamePlay(gamePlay),
         node_count(0),
-        depth_count{}
-        {
-            start_time = std::chrono::system_clock::now();
-        }
+        depth_count{},
+        start_player{},
+        points{}
+{
+    start_time = std::chrono::system_clock::now();
+}
 
 void MinMax::print_progress()
 {
@@ -34,6 +36,13 @@ std::pair<int, std::vector<Card>> MinMax::max(int depth, int alpha, int beta) {
     node_count++;
     depth_count[depth]++;
     print_progress();
+
+    if(depth % 3 == 0 && depth > 0)
+    {
+        std::pair<int, int> res = gamePlay.eval_depth(depth-1, start_player[depth/3-1]);
+        start_player[depth/3] = res.first;
+        points[depth/3] = res.second;
+    }
 
     std::set<Card> next_moves = gamePlay.get_possible_next_moves();
 
@@ -72,6 +81,13 @@ std::pair<int, std::vector<Card>> MinMax::min(int depth, int alpha, int beta) {
     node_count++;
     depth_count[depth]++;
     print_progress();
+
+    if(depth % 3 == 0 && depth > 0)
+    {
+        std::pair<int, int> res = gamePlay.eval_depth(depth-1, start_player[depth/3-1]);
+        start_player[depth/3] = res.first;
+        points[depth/3] = res.second;
+    }
 
     std::set<Card> next_moves = gamePlay.get_possible_next_moves();
 
@@ -116,15 +132,21 @@ std::pair<int, std::vector<Card>> MinMax::last()
 
     for(int i=0; i<3; ++i) {
         if (current_player == 0)
-            cards[i] = *gamePlay.forehandCards.end();
+            cards[i] = *gamePlay.forehandCards.rbegin();
         else if (current_player == 1)
-            cards[i] = *gamePlay.midhandCards.end();
+            cards[i] = *gamePlay.midhandCards.rbegin();
         else
-            cards[i] = *gamePlay.backhandCards.end();
+            cards[i] = *gamePlay.backhandCards.rbegin();
         gamePlay.playedCards.push_back(cards[i]);
         current_player = (current_player + 1) % 3;
     }
-    std::pair<int, std::vector<Card>> result = std::pair<int, std::vector<Card>>(gamePlay.eval(),
+    // eval
+    int res_points = gamePlay.eval_depth(29, start_player[9]).second;
+    for(int i=0; i<10; ++i)
+    {
+        res_points += points[i];
+    }
+    std::pair<int, std::vector<Card>> result = std::pair<int, std::vector<Card>>(res_points,
             {cards[0], cards[1], cards[2]});
 
     for(int i=0; i<3; ++i) {

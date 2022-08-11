@@ -19,6 +19,10 @@ class MinMax
     unsigned long depth_count[30];
     GamePlay gamePlay;
     unsigned long progress_print = 10000000;
+
+    int points[10];
+    int start_player[10];
+
     std::chrono::time_point<std::chrono::system_clock> start_time;
 
 public:
