@@ -55,10 +55,10 @@ public:
 
     static bool is_joker(Card card);
     static int get_color_of_card(Card card);
-    static bool joker_in_deck(std::set<Card> deck);
-    static bool color_in_deck(int color, std::set<Card> deck);
-    static std::set<Card> get_color_and_jokers(int color, std::set<Card> deck);
-    static std::set<Card> get_color(int color, std::set<Card> deck);
+    static bool joker_in_deck(std::set<Card> *deck);
+    static bool color_in_deck(int color, std::set<Card> *deck);
+    static void get_color_and_jokers(int color, std::set<Card> *deck);
+    static void get_color(int color, std::set<Card> *deck);
 
     bool is_trump(Card card);
     bool is_new_play();
@@ -66,7 +66,8 @@ public:
     int get_winner(Card cards[3]);
     int get_previous_player();
     int get_better_card(Card first_card, Card second_card);
-    std::set<Card> get_viable_cards(Card first_card, std::set<Card> remaining_cards);
+
+    void get_viable_cards(Card first_card, std::set<Card> *remaining_cards);
 
     Card get_first_card();
     std::set<Card> get_possible_next_moves();

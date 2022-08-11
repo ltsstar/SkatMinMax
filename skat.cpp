@@ -151,10 +151,10 @@ int GamePlay::get_color_of_card(Card card)
     return static_cast<int>(card) / 8;
 }
 
-bool GamePlay::color_in_deck(int color, std::set<Card> deck)
+bool GamePlay::color_in_deck(int color, std::set<Card> *deck)
 {
     // no jokers!
-    for(Card card : deck)
+    for(Card card : *deck)
     {
         if(get_color_of_card(card) == color && !is_joker(card))
             return true;
@@ -162,9 +162,9 @@ bool GamePlay::color_in_deck(int color, std::set<Card> deck)
     return false;
 }
 
-bool GamePlay::joker_in_deck(std::set<Card> deck)
+bool GamePlay::joker_in_deck(std::set<Card> *deck)
 {
-    for(Card card : deck)
+    for(Card card : *deck)
     {
         if(is_joker(card))
             return true;
@@ -172,32 +172,30 @@ bool GamePlay::joker_in_deck(std::set<Card> deck)
     return false;
 }
 
-std::set<Card> GamePlay::get_color_and_jokers(int color, std::set<Card> deck)
+void GamePlay::get_color_and_jokers(int color, std::set<Card> *deck)
 {
     std::set<Card> result;
-    for(Card card : deck)
+    for(Card card : *deck)
     {
         if(get_color_of_card(card) == color)
             result.insert(card);
         else if(is_joker(card))
             result.insert(card);
     }
-    return result;
 }
 
-std::set<Card> GamePlay::get_color(int color, std::set<Card> deck)
+void GamePlay::get_color(int color, std::set<Card> *deck)
 {
     // without jokers!
     std::set<Card> result;
-    for(Card card : deck)
+    for(Card card : *deck)
     {
         if(get_color_of_card(card) == color && !is_joker(card))
             result.insert(card);
     }
-    return result;
 }
 
-std::set<Card> GamePlay::get_viable_cards(Card first_card, std::set<Card> remaining_cards)
+void GamePlay::get_viable_cards(Card first_card, std::set<Card> *remaining_cards)
 {
     int first_card_color = get_color_of_card(first_card);
     bool trump_played = is_trump(first_card);
@@ -206,17 +204,13 @@ std::set<Card> GamePlay::get_viable_cards(Card first_card, std::set<Card> remain
         bool has_trump = color_in_deck(static_cast<int>(trump), remaining_cards) || joker_in_deck(remaining_cards);
         if(has_trump)
         {
-            return get_color_and_jokers(static_cast<int>(trump), remaining_cards);
-        } else {
-            return remaining_cards;
+            get_color_and_jokers(static_cast<int>(trump), remaining_cards);
         }
     } else {
         bool has_color = color_in_deck(first_card_color, remaining_cards);
         if(has_color)
         {
-            return get_color(first_card_color, remaining_cards);
-        } else {
-            return remaining_cards;
+            get_color(first_card_color, remaining_cards);
         }
     }
 }
@@ -236,13 +230,13 @@ std::set<Card> GamePlay::get_possible_next_moves()
         current_player_cards = backhandCards;
     }
 
-    if(new_play) {
-        return current_player_cards;
-    } else
+    if(!new_play)
     {
         Card first_card = get_first_card();
-        return get_viable_cards(first_card,current_player_cards);
+        get_viable_cards(first_card, &current_player_cards);
     }
+
+    return current_player_cards;
 }
 
 void GamePlay::make_move(Card move)

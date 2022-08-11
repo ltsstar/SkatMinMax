@@ -8,7 +8,7 @@
 TEST_CASE( "joker_in_deck", "[skat]")
 {
     std::set<Card> deck = {Card::D7, Card::SQ, Card::SJ, Card::CJ, Card::C7};
-    bool joker_in_deck = GamePlay::joker_in_deck(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(&deck);
 
     REQUIRE(joker_in_deck == true);
 }
@@ -16,7 +16,7 @@ TEST_CASE( "joker_in_deck", "[skat]")
 TEST_CASE( "joker_in_deck 2", "[skat]")
 {
     std::set<Card> deck = {Card::DJ};
-    bool joker_in_deck = GamePlay::joker_in_deck(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(&deck);
 
     REQUIRE(joker_in_deck == true);
 }
@@ -24,7 +24,7 @@ TEST_CASE( "joker_in_deck 2", "[skat]")
 TEST_CASE( "joker_in_deck 3", "[skat]")
 {
     std::set<Card> deck = {Card::C7};
-    bool joker_in_deck = GamePlay::joker_in_deck(deck);
+    bool joker_in_deck = GamePlay::joker_in_deck(&deck);
 
     REQUIRE(joker_in_deck == false);
 }
@@ -32,8 +32,8 @@ TEST_CASE( "joker_in_deck 3", "[skat]")
 TEST_CASE( "color_in_deck normal", "[skat]")
 {
     std::set<Card> deck = {Card::C7};
-    bool clubs_in_deck = GamePlay::color_in_deck(3, deck);
-    bool diamonds_in_deck = GamePlay::color_in_deck(0, deck);
+    bool clubs_in_deck = GamePlay::color_in_deck(3, &deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, &deck);
 
     REQUIRE(clubs_in_deck == true);
     REQUIRE(diamonds_in_deck == false);
@@ -42,8 +42,8 @@ TEST_CASE( "color_in_deck normal", "[skat]")
 TEST_CASE( "color_in_deck joker", "[skat]")
 {
     std::set<Card> deck = {Card::CJ};
-    bool clubs_in_deck = GamePlay::color_in_deck(3, deck);
-    bool diamonds_in_deck = GamePlay::color_in_deck(0, deck);
+    bool clubs_in_deck = GamePlay::color_in_deck(3, &deck);
+    bool diamonds_in_deck = GamePlay::color_in_deck(0, &deck);
 
     REQUIRE(clubs_in_deck == false);
     REQUIRE(diamonds_in_deck == false);

@@ -36,12 +36,6 @@ std::pair<int, std::vector<Card>> MinMax::max(int depth, int alpha, int beta) {
     print_progress();
 
     std::set<Card> next_moves = gamePlay.get_possible_next_moves();
-    /*
-    if(next_moves.empty())
-    {
-        return std::pair<int, std::vector<Card>>(gamePlay.eval(), {});
-    }
-     */
 
     int maxValue = -1;
     std::vector<Card> previous_moves;
@@ -80,12 +74,6 @@ std::pair<int, std::vector<Card>> MinMax::min(int depth, int alpha, int beta) {
     print_progress();
 
     std::set<Card> next_moves = gamePlay.get_possible_next_moves();
-    /*
-    if(next_moves.empty())
-    {
-        return std::pair<int, std::vector<Card>>(gamePlay.eval(), {});
-    }
-     */
 
     int minValue = 121;
     std::vector<Card> previous_moves;
