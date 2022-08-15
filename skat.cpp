@@ -4,47 +4,143 @@
 #include "skat.h"
 #include "minmax.h"
 
-
-GamePlay::GamePlay(Trump trump) {
-    this->trump = trump;
-}
-
-GamePlay::GamePlay(Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-std::set<Card> backhandCards)
+Card::Card(CardType card_type) :
+    card_type(card_type)
 {
-    this->trump = trump;
-    this->forehandCards = forehandCards;
-    this->midhandCards = midhandCards;
-    this->backhandCards = backhandCards;
-    if(!cards_sanity(forehandCards, midhandCards, backhandCards, playedCards))
-        throw std::invalid_argument("cards exist twice");
+    card_joker = (static_cast<int>(card_type) + 1) % 8 == 0;
+    card_color = static_cast<int>(card_type) / 8;
 }
 
-GamePlay::GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-                   std::set<Card> backhandCards) {
-    this->maxPlayer = max_player;
-    this->trump = trump;
-    this->forehandCards = forehandCards;
-    this->midhandCards = midhandCards;
-    this->backhandCards = backhandCards;
-    if(!cards_sanity(forehandCards, midhandCards, backhandCards, playedCards))
-        throw std::invalid_argument("cards exist twice");
+int Card::get_card_color()
+{
+    return card_color;
 }
 
-GamePlay::GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-                   std::set<Card> backhandCards, std::vector<Card> playedCards, std::vector<int> winners) {
-    this->maxPlayer = max_player;
-    this->trump = trump;
-    this->forehandCards = forehandCards;
-    this->midhandCards = midhandCards;
-    this->backhandCards = backhandCards;
-    this->playedCards = playedCards;
-    this->winners = winners;
-    if(!cards_sanity(forehandCards, midhandCards, backhandCards, playedCards))
+bool Card::is_joker()
+{
+    return card_joker;
+}
+
+bool Card::is_color(int color)
+{
+    return card_color == color;
+}
+
+Hand::Hand()
+{
+}
+
+Hand::Hand(std::set<CardType> deck)
+{
+    for(const CardType &card_type : deck){
+        add_card(Card(card_type));
+    }
+}
+
+bool Hand::has_card(Card card)
+{
+    return cards.find(card) != cards.end();
+}
+
+bool Hand::has_color(int color)
+{
+    return colors[color].size() > 0;
+}
+
+bool Hand::has_joker()
+{
+    return jokers.size() > 0;
+}
+
+void Hand::remove_card(Card card)
+{
+    cards.erase(card);
+    if(card.is_joker())
+        jokers.erase(card);
+    else
+        colors[card.get_card_color()].erase(card);
+}
+
+void Hand::add_card(Card card)
+{
+    cards.insert(card);
+
+    if(card.is_joker())
+        jokers.insert(card);
+    else
+        colors[card.get_card_color()].insert(card);
+}
+
+std::set<Card> Hand::get_cards()
+{
+    return cards;
+}
+
+std::set<Card> Hand::get_jokers()
+{
+    return jokers;
+}
+
+std::set<Card> Hand::get_color(int color)
+{
+    return colors[color];
+}
+
+std::set<Card> Hand::get_color_and_jokers(int color)
+{
+    std::set<Card> colors_and_jokers(colors[color]);
+    colors_and_jokers.insert(jokers.begin(), jokers.end());
+    return colors_and_jokers;
+}
+
+GamePlay::GamePlay(Trump trump) :
+    trump(trump)
+{
+}
+
+GamePlay::GamePlay(Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+std::set<CardType> backhandCards) :
+    trump(trump)
+{
+    if(!cards_sanity(forehandCards, midhandCards, backhandCards, std::vector<CardType>()))
+        throw std::invalid_argument("cards exist twice");
+
+    forehand = Hand(forehandCards);
+    midhand = Hand(midhandCards);
+    backhand = Hand(backhandCards);
+}
+
+GamePlay::GamePlay(int max_player, Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+                   std::set<CardType> backhandCards) :
+                   trump(trump),
+                   max_player(max_player)
+                   {
+    if(!cards_sanity(forehandCards, midhandCards, backhandCards, std::vector<CardType>()))
+        throw std::invalid_argument("cards exist twice");
+
+   forehand = Hand(forehandCards);
+   midhand = Hand(midhandCards);
+   backhand = Hand(backhandCards);
+}
+
+GamePlay::GamePlay(int max_player, Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+                   std::set<CardType> backhandCards, std::vector<CardType> played_card_types, std::vector<int> winners) :
+                   trump(trump),
+                   max_player(max_player),
+                   winners(winners)
+                   {
+    if(!cards_sanity(forehandCards, midhandCards, backhandCards, played_card_types))
         throw std::invalid_argument("card set imbalanced : either cards exist twice or imbalanced");
+
+    forehand = Hand(forehandCards);
+    midhand = Hand(midhandCards);
+    backhand = Hand(backhandCards);
+    std::transform(played_card_types.begin(), played_card_types.end(), played_cards.begin(),
+                   [](CardType card_type) {return Card(card_type);});
 }
 
-bool GamePlay::cards_sanity(std::set<Card> forehandCards, std::set<Card> midhandCards, std::set<Card> backhandCards, std::vector<Card> playedCards)
+bool GamePlay::cards_sanity(std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+                            std::set<CardType> backhandCards, std::vector<CardType> played_card_types)
 {
     bool imbalanced = forehandCards.size() < midhandCards.size() ||
         midhandCards.size() < backhandCards.size();
@@ -53,34 +149,28 @@ bool GamePlay::cards_sanity(std::set<Card> forehandCards, std::set<Card> midhand
 
     for(auto const& card : forehandCards)
     {
-        if(std::find(playedCards.begin(), playedCards.end(), card) != playedCards.end())
+        if(std::find(played_card_types.begin(), played_card_types.end(), card) != played_card_types.end())
             return false;
-        playedCards.push_back(card);
+        played_card_types.push_back(card);
     }
     for(auto const& card : midhandCards)
     {
-        if(std::find(playedCards.begin(), playedCards.end(), card) != playedCards.end())
+        if(std::find(played_card_types.begin(), played_card_types.end(), card) != played_card_types.end())
             return false;
-        playedCards.push_back(card);
+        played_card_types.push_back(card);
     }
     for(auto const& card : backhandCards)
     {
-        if(std::find(playedCards.begin(), playedCards.end(), card) != playedCards.end())
+        if(std::find(played_card_types.begin(), played_card_types.end(), card) != played_card_types.end())
             return false;
-        playedCards.push_back(card);
+        played_card_types.push_back(card);
     }
     return true;
 }
 
 bool GamePlay::is_trump(Card card)
 {
-    int int_card = static_cast<int>(card);
-    return int_card / 8 == static_cast<int>(trump) || is_joker(card);
-}
-
-bool GamePlay::is_joker(Card card)
-{
-    return !((static_cast<int>(card) + 1) % 8);
+    return card.is_joker() || card.is_color(static_cast<int>(trump));
 }
 
 int GamePlay::get_better_card(Card first_card, Card second_card)
@@ -96,8 +186,8 @@ int GamePlay::get_better_card(Card first_card, Card second_card)
         return 1;
     } else if(first_card_trump && second_card_trump)
     {
-        bool first_card_joker = is_joker(first_card);
-        bool second_card_joker = is_joker(second_card);
+        bool first_card_joker = first_card.is_joker();
+        bool second_card_joker = second_card.is_joker();
 
         if(!first_card_joker && second_card_joker)
         {
@@ -110,7 +200,7 @@ int GamePlay::get_better_card(Card first_card, Card second_card)
         }
     } else // else if(!this->is_trump(first_card) && !this->is_trump(second_card))
     {
-        if(get_color_of_card(first_card) == get_color_of_card(second_card))
+        if(first_card.get_card_color() == second_card.get_card_color())
         {
             return static_cast<int>(second_card) > static_cast<int>(first_card);
         } else {
@@ -128,139 +218,86 @@ int GamePlay::get_winner(Card cards[3])
 
 bool GamePlay::is_new_play()
 {
-    return !(playedCards.size() % 3);
+    return !(played_cards.size() % 3);
 }
 
 int GamePlay::get_current_player() {
-    if(playedCards.size() > 2)
+    if(played_cards.size() > 2)
     {
-        int last_winner = winners[playedCards.size() / 3 - 1];
-        return (last_winner + playedCards.size() % 3) % 3;
+        int last_winner = winners[played_cards.size() / 3 - 1];
+        return (last_winner + played_cards.size() % 3) % 3;
     } else {
-        return playedCards.size();
+        return played_cards.size();
     }
 }
 
 Card GamePlay::get_first_card()
 {
-    return playedCards[(playedCards.size() - 1) / 3 * 3];
+    return played_cards[(played_cards.size() - 1) / 3 * 3];
 }
 
-int GamePlay::get_color_of_card(Card card)
+std::set<Card> GamePlay::get_viable_cards(Card first_card, Hand hand)
 {
-    return static_cast<int>(card) / 8;
-}
-
-bool GamePlay::color_in_deck(int color, std::set<Card> *deck)
-{
-    // no jokers!
-    for(Card card : *deck)
+    int first_card_color = first_card.get_card_color();
+    if(is_trump(first_card))
     {
-        if(get_color_of_card(card) == color && !is_joker(card))
-            return true;
-    }
-    return false;
-}
-
-bool GamePlay::joker_in_deck(std::set<Card> *deck)
-{
-    for(Card card : *deck)
-    {
-        if(is_joker(card))
-            return true;
-    }
-    return false;
-}
-
-void GamePlay::get_color_and_jokers(int color, std::set<Card> *deck)
-{
-    std::set<Card> result;
-    for(Card card : *deck)
-    {
-        if(get_color_of_card(card) == color)
-            result.insert(card);
-        else if(is_joker(card))
-            result.insert(card);
-    }
-}
-
-void GamePlay::get_color(int color, std::set<Card> *deck)
-{
-    // without jokers!
-    std::set<Card> result;
-    for(Card card : *deck)
-    {
-        if(get_color_of_card(card) == color && !is_joker(card))
-            result.insert(card);
-    }
-}
-
-void GamePlay::get_viable_cards(Card first_card, std::set<Card> *remaining_cards)
-{
-    int first_card_color = get_color_of_card(first_card);
-    bool trump_played = is_trump(first_card);
-    if(trump_played)
-    {
-        bool has_trump = color_in_deck(static_cast<int>(trump), remaining_cards) || joker_in_deck(remaining_cards);
+        bool has_trump = hand.has_color(static_cast<int>(trump)) || hand.has_joker();
         if(has_trump)
         {
-            get_color_and_jokers(static_cast<int>(trump), remaining_cards);
+            return hand.get_color_and_jokers(static_cast<int>(trump));
         }
-    } else {
-        bool has_color = color_in_deck(first_card_color, remaining_cards);
-        if(has_color)
-        {
-            get_color(first_card_color, remaining_cards);
-        }
+    } else if(hand.has_color(first_card_color)) {
+        return hand.get_color(first_card_color);
     }
+    return hand.get_cards();
 }
 
 std::set<Card> GamePlay::get_possible_next_moves()
 {
     bool new_play = is_new_play();
     int current_player = get_current_player();
-    std::set<Card> current_player_cards;
+    Hand current_hand;
 
-    if(current_player == 0) {
-        current_player_cards = forehandCards;
-    } else if(current_player == 1) {
-        current_player_cards = midhandCards;
+    if (current_player == 0) {
+        current_hand = forehand;
+    } else if (current_player == 1) {
+        current_hand = midhand;
     } else //if(current_player == 2)
     {
-        current_player_cards = backhandCards;
+        current_hand = backhand;
     }
-
-    if(!new_play)
+    if(new_play)
+    {
+        return current_hand.get_cards();
+    } else
     {
         Card first_card = get_first_card();
-        get_viable_cards(first_card, &current_player_cards);
+        return get_viable_cards(first_card, current_hand);
     }
-
-    return current_player_cards;
 }
 
-void GamePlay::make_move(Card move)
+void GamePlay::make_move(Card card)
 {
     int player = get_current_player();
-    playedCards.push_back(move);
+    played_cards.push_back(card);
 
     if(player == 0)
     {
-        forehandCards.erase(move);
+        forehand.remove_card(card);
     } else if (player == 1)
     {
-        midhandCards.erase(move);
+        midhand.remove_card(card);
     } else // if (player == 2)
     {
-        backhandCards.erase(move);
+        backhand.remove_card(card);
     }
 
     // eval winner
-    if(playedCards.size() % 3 == 0)
+    if(played_cards.size() % 3 == 0)
     {
-        Card cards[3] = {this->playedCards[this->playedCards.size() - 3],
-                         this->playedCards[this->playedCards.size() - 2],
-                         this->playedCards[this->playedCards.size() - 1]};
+        Card cards[3] = {played_cards[played_cards.size() - 3],
+                         played_cards[played_cards.size() - 2],
+                         played_cards[played_cards.size() - 1]};
         int winner = get_winner(cards);
         if(winners.size())
         {
@@ -272,23 +309,23 @@ void GamePlay::make_move(Card move)
 
 int GamePlay::get_previous_player()
 {
-    if(playedCards.size() > 3)
+    if(played_cards.size() > 3)
     {
         // get last winner
         int winner_last_round = winners[winners.size()-1];
-        int offset = (playedCards.size() - 1) % 3;
+        int offset = (played_cards.size() - 1) % 3;
         return (winner_last_round + offset) % 3;
     } else {
-        return playedCards.size() - 1;
+        return played_cards.size() - 1;
     }
 }
 
 void GamePlay::revert_move()
 {
-    Card move = playedCards.back();
+    Card card = played_cards.back();
 
     // revert winners
-    if(playedCards.size() % 3 == 0)
+    if(played_cards.size() % 3 == 0)
     {
         winners.pop_back();
     }
@@ -297,16 +334,16 @@ void GamePlay::revert_move()
 
     if(last_player == 0)
     {
-        forehandCards.insert(move);
+        forehand.add_card(card);
     } else if(last_player == 1)
     {
-        midhandCards.insert(move);
+        midhand.add_card(card);
     } else // if(last_player == 2)
     {
-        backhandCards.insert(move);
+        backhand.add_card(card);
     }
 
-    playedCards.pop_back();
+    played_cards.pop_back();
 }
 
 int GamePlay::get_points_of_card(Card card)
@@ -337,13 +374,13 @@ int GamePlay::get_points_of_hand(Card play[3])
 std::pair<int, int> GamePlay::eval_depth(int depth, int start_player)
 {
     int result = 0;
-    Card first_card = playedCards[depth-2];
-    Card second_card = playedCards[depth-1];
-    Card third_card = playedCards[depth];
+    Card first_card = played_cards[depth - 2];
+    Card second_card = played_cards[depth - 1];
+    Card third_card = played_cards[depth];
 
     Card play[3] = {first_card, second_card, third_card};
     int winner = this->get_winner(play);
-    if((winner + start_player) % 3 == maxPlayer)
+    if((winner + start_player) % 3 == max_player)
     {
         return std::pair<int, int>((winner + start_player) % 3, this->get_points_of_hand(play));
     } else {
@@ -354,15 +391,15 @@ std::pair<int, int> GamePlay::eval_depth(int depth, int start_player)
 int GamePlay::eval() {
     int result = 0;
     int start_player = 0;
-    for(int i=0;i < playedCards.size()/3;++i)
+    for(int i=0; i < played_cards.size() / 3; ++i)
     {
-        Card first_card = playedCards[i*3];
-        Card second_card = playedCards[i*3+1];
-        Card third_card = playedCards[i*3+2];
+        Card first_card = played_cards[i * 3];
+        Card second_card = played_cards[i * 3 + 1];
+        Card third_card = played_cards[i * 3 + 2];
 
         Card play[3] = {first_card, second_card, third_card};
         int winner = this->get_winner(play);
-        if((winner + start_player) % 3 == maxPlayer)
+        if((winner + start_player) % 3 == max_player)
         {
             result += this->get_points_of_hand(play);
         }
@@ -372,5 +409,5 @@ int GamePlay::eval() {
 }
 
 int GamePlay::getMaxPlayer() const {
-    return maxPlayer;
+    return max_player;
 }

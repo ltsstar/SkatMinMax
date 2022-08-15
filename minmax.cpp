@@ -132,12 +132,12 @@ std::pair<int, std::vector<Card>> MinMax::last()
 
     for(int i=0; i<3; ++i) {
         if (current_player == 0)
-            cards[i] = *gamePlay.forehandCards.rbegin();
+            cards[i] = *gamePlay.forehand.get_cards().rbegin();
         else if (current_player == 1)
-            cards[i] = *gamePlay.midhandCards.rbegin();
+            cards[i] = *gamePlay.midhand.get_cards().rbegin();
         else
-            cards[i] = *gamePlay.backhandCards.rbegin();
-        gamePlay.playedCards.push_back(cards[i]);
+            cards[i] = *gamePlay.backhand.get_cards().rbegin();
+        gamePlay.played_cards.push_back(cards[i]);
         current_player = (current_player + 1) % 3;
     }
     // eval
@@ -150,7 +150,7 @@ std::pair<int, std::vector<Card>> MinMax::last()
             {cards[0], cards[1], cards[2]});
 
     for(int i=0; i<3; ++i) {
-        gamePlay.playedCards.pop_back();
+        gamePlay.played_cards.pop_back();
     }
     return result;
 }

@@ -13,12 +13,7 @@
 #ifndef SKATMINMAX_SKAT_H
 #define SKATMINMAX_SKAT_H
 
-enum class Card {
-    D7 = 0, D8 = 1, D9 = 2, DQ = 3, DK = 4, D10 = 5, DA = 6, DJ = 7,
-    H7 = 8, H8 = 9, H9 = 10, HQ = 11, HK = 12, H10 = 13, HA = 14, HJ = 15,
-    S7 = 16, S8 = 17, S9 = 18, SQ = 19, SK = 20, S10 = 21, SA = 22, SJ = 23,
-    C7 = 24, C8 = 25, C9 = 26, CQ = 27, CK = 28, C10 = 29, CA = 30, CJ = 31
-};
+
 
 enum class Trump {
     Diamonds = 0,
@@ -27,40 +22,82 @@ enum class Trump {
     Clubs = 3
 };
 
-class GamePlay
-{
+enum class CardType {
+    D7 = 0, D8 = 1, D9 = 2, DQ = 3, DK = 4, D10 = 5, DA = 6, DJ = 7,
+    H7 = 8, H8 = 9, H9 = 10, HQ = 11, HK = 12, H10 = 13, HA = 14, HJ = 15,
+    S7 = 16, S8 = 17, S9 = 18, SQ = 19, SK = 20, S10 = 21, SA = 22, SJ = 23,
+    C7 = 24, C8 = 25, C9 = 26, CQ = 27, CK = 28, C10 = 29, CA = 30, CJ = 31
+};
 
+class Card
+{
+    CardType card_type;
+    bool card_joker;
+    bool card_color;
+public:
+    Card() {};
+    explicit Card(CardType card_type);
+    int get_card_color();
+    bool is_joker();
+    bool is_color(int color);
+    explicit operator CardType() const {
+        return card_type;
+    };
+    explicit operator int() const {
+        return static_cast<int>(card_type);
+    };
+    bool operator <(const Card& other_card) const
+    {
+        return card_type < other_card.card_type;
+    };
+};
+
+class Hand
+{
+    std::set<Card> cards;
+    std::set<Card> jokers;
+    std::set<Card> colors[4];
 
 public:
-    std::set<Card> forehandCards;
-    std::set<Card> midhandCards;
-    std::set<Card> backhandCards;
+    Hand();
+    Hand(std::set<CardType> cards);
+    bool has_card(Card card);
+    bool has_color(int color);
+    bool has_joker();
+    void remove_card(Card card);
+    void add_card(Card card);
+    std::set<Card> get_cards();
+    std::set<Card> get_jokers();
+    std::set<Card> get_color(int color);
+    std::set<Card> get_color_and_jokers(int color);
+};
+
+class GamePlay
+{
+public:
+    Hand forehand;
+    Hand midhand;
+    Hand backhand;
 
     int points[10];
 
-    std::vector<Card> playedCards;
+    std::vector<Card> played_cards;
 
     Trump trump;
-    int maxPlayer;
+    int max_player;
     std::vector<int> winners;
     int getMaxPlayer() const;
 
 public:
     GamePlay(Trump trump);
-    GamePlay(Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-             std::set<Card> backhandCards);
-    GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-             std::set<Card> backhandCards);
-    GamePlay(int max_player, Trump trump, std::set<Card> forehandCards, std::set<Card> midhandCards,
-             std::set<Card> backhandCards, std::vector<Card> playedCards, std::vector<int> winners);
-    bool cards_sanity(std::set<Card> forehandCards, std::set<Card> midhandCards, std::set<Card> backhandCards, std::vector<Card> playedCards);
-
-    static bool is_joker(Card card);
-    static int get_color_of_card(Card card);
-    static bool joker_in_deck(std::set<Card> *deck);
-    static bool color_in_deck(int color, std::set<Card> *deck);
-    static void get_color_and_jokers(int color, std::set<Card> *deck);
-    static void get_color(int color, std::set<Card> *deck);
+    GamePlay(Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+             std::set<CardType> backhandCards);
+    GamePlay(int max_player, Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+             std::set<CardType> backhandCards);
+    GamePlay(int max_player, Trump trump, std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+             std::set<CardType> backhandCards, std::vector<CardType> played_card_types, std::vector<int> winners);
+    bool cards_sanity(std::set<CardType> forehandCards, std::set<CardType> midhandCards,
+                      std::set<CardType> backhandCards, std::vector<CardType> played_card_types);
 
     bool is_trump(Card card);
     bool is_new_play();
@@ -69,7 +106,7 @@ public:
     int get_previous_player();
     int get_better_card(Card first_card, Card second_card);
 
-    void get_viable_cards(Card first_card, std::set<Card> *remaining_cards);
+    std::set<Card> get_viable_cards(Card first_card, Hand hand);
 
     Card get_first_card();
     std::set<Card> get_possible_next_moves();
