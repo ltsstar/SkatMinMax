@@ -46,7 +46,7 @@ std::pair<int, std::vector<Card*>> MinMax::max(int depth, int alpha, int beta) {
         points[depth/3] = res.second;
     }
 
-    std::vector<Card*> next_moves = gamePlay.get_possible_next_moves();
+    std::vector<Card*> next_moves = gamePlay.get_reduced_next_moves();
 
     int maxValue = alpha;
     std::vector<Card*> previous_moves;
@@ -97,7 +97,7 @@ std::pair<int, std::vector<Card*>> MinMax::min(int depth, int alpha, int beta) {
         points[depth/3] = res.second;
     }
 
-    std::vector<Card*> next_moves = gamePlay.get_possible_next_moves();
+    std::vector<Card*> next_moves = gamePlay.get_reduced_next_moves();
 
     int minValue = beta;
     std::vector<Card*> previous_moves;

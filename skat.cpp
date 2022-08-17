@@ -231,6 +231,11 @@ bool GamePlay::is_new_play()
     return !(played_cards.size() % 3);
 }
 
+bool GamePlay::is_last_play()
+{
+    return played_cards.size() % 3 == 2;
+}
+
 int GamePlay::get_current_player() {
     if(played_cards.size() > 2)
     {
@@ -279,6 +284,139 @@ std::vector<Card*> GamePlay::get_possible_next_moves()
     if(new_play)
     {
         return current_hand->get_cards();
+    } else
+    {
+        Card* first_card = get_first_card();
+        return get_viable_cards(first_card, current_hand);
+    }
+}
+
+std::vector<Card*> GamePlay::reduce_hand_equivalencies(Hand* player_hand)
+{
+    std::vector<Card*> result;
+    for(int i=0; i<4; ++i)
+    {
+        if(player_hand->has_color(i))
+        {
+            std::vector<Card*> color_cards = player_hand->get_color(i);
+
+            bool has7 = false;
+            bool has8 = false;
+            bool has9 = false;
+
+            for(Card* card : color_cards)
+            {
+                if(static_cast<int>(*card) == i*8)
+                {
+                    // has D7, H7, S7 or C7
+                    has7 = true;
+                } else if(static_cast<int>(*card) == i*8 + 1)
+                {
+                    has8 = true;
+                } else if(static_cast<int>(*card) == i*8 + 2)
+                {
+                    has9 = true;
+                }
+            }
+
+            bool drop8 = false;
+            bool drop9 = false;
+
+            if(has7 && has8 && has9)
+            {
+                drop8 = true;
+                drop9 = true;
+            } else if(has7 && has9)
+            {
+                has8 = std::find_if(color_cards.begin(), color_cards.end(),
+                             [](Card* card) {return static_cast<int>(*card) % 8 == 1; })
+                                     != color_cards.end();
+
+                if(has8)
+                {
+                    drop8 = true;
+                    drop9 = true;
+                }
+            } else if(has7 && has8)
+            {
+                drop8 = true;
+            } else if(has8 && has9) {
+                drop9 = true;
+            }
+            for(Card* card : color_cards)
+            {
+                if(drop8 && static_cast<int>(*card) % 8 == 1)
+                    continue;
+                if(drop9 && static_cast<int>(*card) % 8 == 2)
+                    continue;
+                result.push_back(card);
+            }
+        }
+    }
+
+    int joker_int = 0;
+    std::vector<Card*> jokers = player_hand->get_jokers();
+
+    for(Card* joker : jokers)
+    {
+        int joker_color = pow(2, joker->get_card_color());
+        joker_int += joker_color;
+    }
+
+
+    if(joker_int == 15      // DJ + DJ + SJ + CJ
+        || joker_int == 7   // DJ + HJ + SJ
+        || joker_int == 14  // HJ + SJ + CJ
+        || joker_int == 6   // HJ + SJ
+        || joker_int == 3   // DJ + HJ
+        || joker_int == 12  // SJ + CJ
+        )
+    {
+        result.push_back(jokers.front());
+    } else if(joker_int == 13) // DJ + SJ + CJ
+    {
+        for(Card* joker : jokers)
+        {
+            if(static_cast<CardType>(*joker) == CardType::DJ
+                || static_cast<CardType>(*joker) == CardType::CJ)
+                result.push_back(joker);
+        }
+    } else if(joker_int == 11) // DJ + HJ + CJ
+    {
+        for(Card* joker : jokers)
+        {
+            if(static_cast<CardType>(*joker) == CardType::DJ
+               || static_cast<CardType>(*joker) == CardType::CJ)
+                result.push_back(joker);
+        }
+    } else {
+        result.insert(result.end(), jokers.begin(), jokers.end());
+    }
+    return result;
+}
+
+
+
+std::vector<Card*> GamePlay::get_reduced_next_moves()
+{
+    bool new_play = is_new_play();
+    bool last_play = is_last_play();
+
+    int current_player = get_current_player();
+    Hand* current_hand;
+
+    if (current_player == 0) {
+        current_hand = forehand;
+    } else if (current_player == 1) {
+        current_hand = midhand;
+    } else //if(current_player == 2)
+    {
+        current_hand = backhand;
+    }
+
+    if(new_play)
+    {
+        return reduce_hand_equivalencies(current_hand);
     } else
     {
         Card* first_card = get_first_card();

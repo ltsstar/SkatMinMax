@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
+#include <cmath>
 
 #ifndef SKATMINMAX_SKAT_H
 #define SKATMINMAX_SKAT_H
@@ -33,7 +34,7 @@ class Card
 {
     CardType card_type;
     bool card_joker;
-    bool card_color;
+    int card_color;
 public:
     Card() {};
     explicit Card(CardType card_type);
@@ -105,6 +106,7 @@ public:
 
     bool is_trump(Card* card);
     bool is_new_play();
+    bool is_last_play();
     int get_current_player();
     int get_winner(Card* cards[3]);
     int get_previous_player();
@@ -114,6 +116,8 @@ public:
 
     Card* get_first_card();
     std::vector<Card*> get_possible_next_moves();
+    std::vector<Card*> reduce_hand_equivalencies(Hand* player_hand);
+    std::vector<Card*> get_reduced_next_moves();
     void make_move(Card *move);
     void revert_move();
     int get_points_of_card(Card* card);
