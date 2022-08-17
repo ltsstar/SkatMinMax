@@ -15,6 +15,7 @@
 
 class MinMax
 {
+    int max_depth;
     unsigned long node_count;
     unsigned long depth_count[30];
     GamePlay gamePlay;
@@ -28,9 +29,9 @@ class MinMax
 public:
     MinMax(GamePlay gamePlay);
     void print_progress();
-    std::pair<int, std::vector<Card>> max(int depth, int alpha, int beta);
-    std::pair<int, std::vector<Card>> min(int depth, int alpha, int beta);
-    std::pair<int, std::vector<Card>> last();
+    std::pair<int, std::vector<Card*>> max(int depth, int alpha, int beta);
+    std::pair<int, std::vector<Card*>> min(int depth, int alpha, int beta);
+    std::pair<int, std::vector<Card*>> last();
 };
 
 #endif //SKATMINMAX_MINMAX_H

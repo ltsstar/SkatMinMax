@@ -36,7 +36,7 @@ TEST_CASE( "get_previous_player", "[skat]")
 
 }
 
-TEST_CASE( "cards exist twice", "[minmax]")
+TEST_CASE( "cards exist twice", "[smallgame]")
 {
     GamePlay gamePlay = GamePlay(0,
                                  Trump::Diamonds,
@@ -44,11 +44,11 @@ TEST_CASE( "cards exist twice", "[minmax]")
                                  {CardType::DK, CardType::SA},
                                  {CardType::D10, CardType::C9});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0, 0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0, -1,121);
     REQUIRE(res.first == 29);
 }
 
-TEST_CASE( "minmax no counterplay possible", "[minmax]")
+TEST_CASE( "minmax no counterplay possible", "[smallgame]")
 {
     GamePlay gamePlay = GamePlay(0,
              Trump::Diamonds,
@@ -56,11 +56,11 @@ TEST_CASE( "minmax no counterplay possible", "[minmax]")
              {CardType::DK, CardType::SA},
              {CardType::D10, CardType::C9});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 29);
 }
 
-TEST_CASE( "minmax counterplay", "[minmax]")
+TEST_CASE( "minmax counterplay", "[smallgame]")
 {
     GamePlay gamePlay = GamePlay(0,
                                  Trump::Diamonds,
@@ -68,11 +68,11 @@ TEST_CASE( "minmax counterplay", "[minmax]")
                                  {CardType::SJ, CardType::DA},
                                  {CardType::D10, CardType::C9});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 23);
 }
 
-TEST_CASE( "minmax counterplay 2", "[minmax]")
+TEST_CASE( "minmax counterplay 2", "[smallgame]")
 {
     GamePlay gamePlay = GamePlay(0,
                                  Trump::Diamonds,
@@ -80,7 +80,7 @@ TEST_CASE( "minmax counterplay 2", "[minmax]")
                                  {CardType::SJ, CardType::DJ},
                                  {CardType::DK, CardType::DQ});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 7);
 }
 
@@ -95,7 +95,7 @@ TEST_CASE( "minmax big game", "[minmax]")
                                  {CardType::S7, CardType::CK, CardType::C9, CardType::HA, CardType::H10, CardType::HK,
                                   CardType::DA, CardType::D10, CardType::DK, CardType::DQ});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 2);
 }
 
@@ -107,7 +107,7 @@ TEST_CASE( "minmax big game 2", "[minmax]")
                                  {CardType::HJ, CardType::CQ, CardType::C8, CardType::C7, CardType::SA, CardType::S7, CardType::HA, CardType::H8, CardType::DK, CardType::D8},
                                  {CardType::CA, CardType::CK, CardType::SK, CardType::S9, CardType::S8, CardType::H10, CardType::H9, CardType::H7, CardType::D9, CardType::D7});
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 2);
 }
 
@@ -121,6 +121,6 @@ TEST_CASE( "minmax safe total win", "[minmax]")
                                  {CardType::SQ, CardType::SK, CardType::S10, CardType::SA, CardType::C7, CardType::S8, CardType::S9, CardType::CQ, CardType::CK, CardType::C10});
     // hand: CA, D7
     MinMax minMax = MinMax(gamePlay);
-    std::pair<int, std::vector<Card>> res = minMax.max(0,0,0);
+    std::pair<int, std::vector<Card*>> res = minMax.max(0,-1,121);
     REQUIRE(res.first == 2);
 }
