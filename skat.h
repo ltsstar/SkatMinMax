@@ -38,7 +38,8 @@ class Card
 public:
     Card() {};
     explicit Card(CardType card_type);
-    int get_card_color();
+    int get_color();
+    int get_points();
     bool is_joker();
     bool is_color(int color);
     explicit operator CardType() const {
@@ -57,14 +58,79 @@ public:
     }
 };
 
-class Hand
+class CardContainer
 {
     std::vector<Card*> jokers;
     std::vector<Card*> colors[4];
+public:
+    CardContainer(std::set<CardType> cards);
+    CardContainer(std::vector<Card*> cards);
 
+    bool has_card(Card* card);
+    bool has_card(Card card);
+    bool has_joker();
+    bool has_color(int color);
+
+
+    // member typedefs provided through inheriting from std::iterator
+    class iterator: public std::iterator<
+            std::input_iterator_tag,   // iterator_category
+            long,                      // value_type
+            long,                      // difference_type
+            const long*,               // pointer
+            long                       // reference
+    >{
+    public:
+        int group;
+        std::vector<Card*>* jokers;
+        std::vector<Card*> (*colors)[4];
+        std::vector<Card*>::iterator current_iterator;
+
+        explicit iterator(std::vector<Card*>* _jokers, std::vector<Card*> (*_colors)[4],
+                          std::vector<Card*>::iterator _current_iterator, int _group) :
+            jokers(_jokers), colors{_colors}, current_iterator(_current_iterator), group(_group)
+            {
+            }
+        iterator& operator++() {
+            if(group < 4)
+            {
+                current_iterator++;
+                if(current_iterator == colors[group]->end())
+                {
+                    if(group == 3)
+                    {
+                        current_iterator = jokers->begin();
+                    } else {
+                        group++;
+                        current_iterator = colors[group]->begin();
+                    }
+                } else {
+                    current_iterator++;
+                }
+            } else {
+                current_iterator++;
+                if(current_iterator == jokers->end())
+                    group++;
+            }
+            return *this;
+        }
+        bool operator==(iterator other) const {
+            return group == other.group && current_iterator == other.current_iterator;
+        }
+        bool operator!=(iterator other) const {
+            return !(*this == other);
+        }
+    };
+    iterator begin() {return iterator(&jokers, &colors, colors[0].begin(), 0);}
+    iterator end() {return iterator(&jokers, &colors, jokers.end(), 5);}
+};
+
+class Hand : CardContainer
+{
 public:
     Hand();
     Hand(std::set<CardType> cards);
+    Hand(std::vector<Card*> cards);
     bool has_card(Card* card);
     bool has_color(int color);
     bool has_joker();
@@ -115,8 +181,10 @@ public:
     std::vector<Card*> get_viable_cards(Card* first_card, Hand* hand);
 
     Card* get_first_card();
+    Card* get_second_card();
     std::vector<Card*> get_possible_next_moves();
     std::vector<Card*> reduce_hand_equivalencies(Hand* player_hand);
+    Hand get_viable_hand(Card* first_card, Hand* hand);
     std::vector<Card*> get_reduced_next_moves();
     void make_move(Card *move);
     void revert_move();

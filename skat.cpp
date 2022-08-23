@@ -11,7 +11,7 @@ Card::Card(CardType card_type) :
     card_color = static_cast<int>(card_type) / 8;
 }
 
-int Card::get_card_color()
+int Card::get_color()
 {
     return card_color;
 }
@@ -38,6 +38,14 @@ Hand::Hand(std::set<CardType> deck)
     }
 }
 
+Hand::Hand(std::vector<Card*> deck)
+{
+    for(Card *card : deck)
+    {
+        add_card(card);
+    }
+}
+
 bool Hand::has_color(int color)
 {
     return colors[color].size() > 0;
@@ -53,8 +61,8 @@ void Hand::remove_card(Card* card)
     if(card->is_joker())
         jokers.erase(std::find(jokers.begin(), jokers.end(), card));
     else
-        colors[card->get_card_color()].erase(std::find(colors[card->get_card_color()].begin(),
-                                                      colors[card->get_card_color()].end(), card));
+        colors[card->get_color()].erase(std::find(colors[card->get_color()].begin(),
+                                                  colors[card->get_color()].end(), card));
 }
 
 void Hand::add_card(Card* card)
@@ -62,7 +70,7 @@ void Hand::add_card(Card* card)
     if(card->is_joker())
         jokers.push_back(card);
     else
-        colors[card->get_card_color()].push_back(card);
+        colors[card->get_color()].push_back(card);
 }
 
 std::vector<Card*> Hand::get_cards()
@@ -210,7 +218,7 @@ int GamePlay::get_better_card(Card* first_card, Card* second_card)
         }
     } else // else if(!this->is_trump(first_card) && !this->is_trump(second_card))
     {
-        if(first_card->get_card_color() == second_card->get_card_color())
+        if(first_card->get_color() == second_card->get_color())
         {
             return static_cast<int>(*second_card) > static_cast<int>(*first_card);
         } else {
@@ -251,9 +259,14 @@ Card* GamePlay::get_first_card()
     return played_cards[(played_cards.size() - 1) / 3 * 3];
 }
 
+Card* GamePlay::get_second_card()
+{
+    return played_cards[(played_cards.size() - 1) / 3 * 3 + 1];
+}
+
 std::vector<Card*> GamePlay::get_viable_cards(Card* first_card, Hand* hand)
 {
-    int first_card_color = first_card->get_card_color();
+    int first_card_color = first_card->get_color();
     if(is_trump(first_card))
     {
         bool has_trump = hand->has_color(static_cast<int>(trump)) || hand->has_joker();
@@ -265,6 +278,22 @@ std::vector<Card*> GamePlay::get_viable_cards(Card* first_card, Hand* hand)
         return hand->get_color(first_card_color);
     }
     return hand->get_cards();
+}
+
+Hand GamePlay::get_viable_hand(Card* first_card, Hand* hand)
+{
+    int first_card_color = first_card->get_color();
+    if(is_trump(first_card))
+    {
+        bool has_trump = hand->has_color(static_cast<int>(trump)) || hand->has_joker();
+        if(has_trump)
+        {
+            return Hand(hand->get_color_and_jokers(static_cast<int>(trump)));
+        }
+    } else if(hand->has_color(first_card_color)) {
+        return Hand(hand->get_color(first_card_color));
+    }
+    return *hand;
 }
 
 std::vector<Card*> GamePlay::get_possible_next_moves()
@@ -359,7 +388,7 @@ std::vector<Card*> GamePlay::reduce_hand_equivalencies(Hand* player_hand)
 
     for(Card* joker : jokers)
     {
-        int joker_color = pow(2, joker->get_card_color());
+        int joker_color = pow(2, joker->get_color());
         joker_int += joker_color;
     }
 
@@ -395,7 +424,69 @@ std::vector<Card*> GamePlay::reduce_hand_equivalencies(Hand* player_hand)
     return result;
 }
 
+Hand GamePlay::reduce_last_play(Card* first_card, Card* second_card, Hand* hand)
+{
+    // if first player is solo player AND second player did not outplay first card
+    //    AND last player can not outplay first card either
+    // THEN:
+    //    return only lowest cards
 
+    Hand reduced_hand = Hand(*hand);
+
+    // check if first card was played by solo player
+    int last_winner = winners[played_cards.size() / 3];
+    if(last_winner != 0)
+        return reduced_hand;
+
+    // check if first player outplayed second player
+    if(get_better_card(first_card, second_card) != 0)
+        return reduced_hand;
+
+
+    // check if last player can win:
+
+    bool has_trump_color = hand->has_color(static_cast<int>(trump));
+    bool has_joker = hand->has_joker();
+
+    if(first_card->is_joker())
+    {
+        // check if last player has joker remaining
+        if(has_joker)
+        {
+            // last player has joker => check if winning is possible
+            if(hand->has_higher_joker(first_card_joker)) {
+                // last player can win => no reduction
+                return reduced_hand;
+            } else {
+                // last player can not win => return only lowest joker and trump card!
+                Card* lowest_joker = reduced_hand.get_lowest_joker();
+                reduced_hand->remove_jokers();
+                } else {
+                    // hand has no joker => last player can not win
+                    // return lowest trump color
+                    hand->remove_color(static_cast<int>(trump));
+                    hand->add_card(hand->get_lowest_card_of_color(static_cast<int>(trump)));
+                }
+
+            }
+        } else {
+            // last player does not have trump => can't win => remain only lowest card of each color
+        }
+    } else {
+        // first card is not trump => check if player needs to serve
+        bool has_color = hand->has_color(first_card->get_color());
+        if(has_color)
+        {
+            // last player needs to serve => check if winning is possible
+        } else {
+            // last player does not need to serve => check if last player has trump
+            bool has_trump_color = hand->has_color(static_cast<int>(trump));
+            bool has_joker = hand->has_joker();
+            if()
+        }
+    }
+    return reduced_hand;
+}
 
 std::vector<Card*> GamePlay::get_reduced_next_moves()
 {
@@ -420,7 +511,13 @@ std::vector<Card*> GamePlay::get_reduced_next_moves()
     } else
     {
         Card* first_card = get_first_card();
-        return get_viable_cards(first_card, current_hand);
+        Hand viable_hand = get_viable_hand(first_card, current_hand);
+        if(last_play)
+        {
+            Card* second_card = get_second_card();
+            viable_hand = reduce_last_play(first_card, second_card, current_hand);
+        }
+        return reduce_hand_equivalencies(&viable_hand);
     }
 }
 
