@@ -4,7 +4,7 @@ project(SkatMinMax)
 set(CMAKE_CXX_STANDARD 14)
 find_package(Catch2 3 REQUIRED)
 
-add_executable(SkatMinMax main.cpp skat.cpp minmax.cpp)
+add_executable(SkatMinMax main.cpp skat.cpp minmax.cpp hand.cpp hand.h)
 
 add_executable(tests tests.cpp skat.cpp minmax.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
