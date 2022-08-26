@@ -53,10 +53,16 @@ public:
 
 class CardContainer
 {
+
     std::vector<Card*> jokers;
     std::vector<Card*> colors[4];
+    Card* lowest_joker;
+    Card* highest_joker;
+    Card* lowest_colors[4];
+    Card* highest_colors[4];
+
 public:
-    CardContainer() = default;
+    CardContainer();
     CardContainer(const CardContainer& other_card_container);
     explicit CardContainer(std::set<CardType> cards);
     explicit CardContainer(std::vector<Card*> cards);
@@ -64,19 +70,36 @@ public:
     bool has_card(const Card* card);
     bool has_card(const Card card);
     bool has_joker();
+    bool has_higher_joker(Card* card);
+    bool has_higher_color(Card* card);
     bool has_color(int color);
 
-    void remove_card(const Card* card);
-    void remove_color(int color);
-    void add_card(Card* card);
+    Card* find_highest_joker();
+    Card* find_lowest_joker();
+    Card* find_highest_color(int color);
+    Card* find_lowest_color(int color);
 
+    void remove_card(const Card* card);
+    void remove_cards();
+    void remove_color(int color);
+    void remove_jokers();
+    void add_joker(Card* card);
+    void add_color(Card* card);
+    void add_card(Card* card);
+    void add_cards(std::vector<Card*> cards);
+
+    Card* get_lowest_joker();
+    Card* get_highest_joker();
+    Card* get_lowest_card_of_color(int color);
+    Card* get_highest_card_of_color(int color);
     std::vector<Card*> get_jokers();
     std::vector<Card*> get_color(int color);
+    std::vector<Card*> get_lowest_card_of_each_color();
+    std::vector<Card*> get_highest_card_of_each_color();
+
     CardContainer get_color_and_jokers(int color);
 
-    explicit operator std::vector<Card*>() {
-        return std::vector<Card*>(begin(), end());
-    }
+    int size();
 
     // member typedefs provided through inheriting from std::iterator
     class iterator: public std::iterator<
@@ -126,20 +149,12 @@ public:
         bool operator!=(const iterator other) const {
             return !(*this == other);
         }
-        const Card& operator*() const {
-            return **current_iterator;
+        Card* operator*()  {
+            return *current_iterator;
         }
     };
     iterator begin() {return iterator(&jokers, &colors, colors[0].begin(), 0);}
     iterator end() {return iterator(&jokers, &colors, jokers.end(), 5);}
-};
-
-class Hand : CardContainer
-{
-public:
-
-    Card* get_last_card();
-    std::vector<Card*> get_color_and_jokers(int color);
 };
 
 #endif //SKATMINMAX_HAND_H

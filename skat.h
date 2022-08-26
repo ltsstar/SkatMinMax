@@ -16,14 +16,12 @@
 
 #include "hand.h"
 
-
-
 class GamePlay
 {
 public:
-    Hand* forehand;
-    Hand* midhand;
-    Hand* backhand;
+    CardContainer* forehand;
+    CardContainer* midhand;
+    CardContainer* backhand;
 
     int points[10];
 
@@ -53,14 +51,14 @@ public:
     int get_previous_player();
     int get_better_card(Card* first_card, Card* second_card);
 
-    std::vector<Card*> get_viable_cards(Card* first_card, Hand* hand);
+    void get_viable_cards(Card* first_card, CardContainer* hand);
 
     Card* get_first_card();
     Card* get_second_card();
-    std::vector<Card*> get_possible_next_moves();
-    std::vector<Card*> reduce_hand_equivalencies(Hand* player_hand);
-    Hand get_viable_hand(Card* first_card, Hand* hand);
-    std::vector<Card*> get_reduced_next_moves();
+
+    void reduce_hand_equivalencies(CardContainer* player_hand);
+    void reduce_last_play(Card* first_card, Card* second_card, CardContainer* hand);
+    std::vector<Card*> get_next_moves();
     void make_move(Card *move);
     void revert_move();
     int get_points_of_card(Card* card);

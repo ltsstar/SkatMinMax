@@ -2,16 +2,15 @@
 // Created by michel on 8/5/22.
 //
 
+#ifndef SKATMINMAX_MINMAX_H
+#define SKATMINMAX_MINMAX_H
+
 #include "skat.h"
 
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdio>
 #include <chrono>
-
-
-#ifndef SKATMINMAX_MINMAX_H
-#define SKATMINMAX_MINMAX_H
 
 class MinMax
 {

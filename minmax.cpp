@@ -11,8 +11,8 @@ MinMax::MinMax(GamePlay gamePlay) :
         points{}
 {
     start_time = std::chrono::system_clock::now();
-    max_depth = gamePlay.forehand->get_cards().size() + gamePlay.midhand->get_cards().size()
-            + gamePlay.backhand->get_cards().size() - 1;
+    max_depth = gamePlay.forehand->size() + gamePlay.midhand->size()
+            + gamePlay.backhand->size() - 1;
 }
 
 void MinMax::print_progress()
@@ -46,7 +46,7 @@ std::pair<int, std::vector<Card*>> MinMax::max(int depth, int alpha, int beta) {
         points[depth/3] = res.second;
     }
 
-    std::vector<Card*> next_moves = gamePlay.get_reduced_next_moves();
+    std::vector<Card*> next_moves = gamePlay.get_next_moves();
 
     int maxValue = alpha;
     std::vector<Card*> previous_moves;
@@ -97,7 +97,7 @@ std::pair<int, std::vector<Card*>> MinMax::min(int depth, int alpha, int beta) {
         points[depth/3] = res.second;
     }
 
-    std::vector<Card*> next_moves = gamePlay.get_reduced_next_moves();
+    std::vector<Card*> next_moves = gamePlay.get_next_moves();
 
     int minValue = beta;
     std::vector<Card*> previous_moves;
@@ -145,11 +145,11 @@ std::pair<int, std::vector<Card*>> MinMax::last()
 
     for(int i=0; i<3; ++i) {
         if (current_player == 0)
-            cards[i] = gamePlay.forehand->get_last_card();
+            cards[i] = *gamePlay.forehand->begin();
         else if (current_player == 1)
-            cards[i] = gamePlay.midhand->get_last_card();
+            cards[i] = *gamePlay.midhand->begin();
         else
-            cards[i] = gamePlay.backhand->get_last_card();
+            cards[i] = *gamePlay.backhand->begin();
         gamePlay.played_cards.push_back(cards[i]);
         current_player = (current_player + 1) % 3;
     }

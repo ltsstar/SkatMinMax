@@ -84,7 +84,7 @@ TEST_CASE( "minmax counterplay 2", "[smallgame]")
     REQUIRE(res.first == 7);
 }
 
-TEST_CASE( "minmax big game", "[minmax]")
+TEST_CASE( "minmax big game", "[standard_game]")
 {
     GamePlay gamePlay = GamePlay(0,
                                  Trump::Spades,

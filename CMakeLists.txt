@@ -4,9 +4,9 @@ project(SkatMinMax)
 set(CMAKE_CXX_STANDARD 14)
 find_package(Catch2 3 REQUIRED)
 
-add_executable(SkatMinMax main.cpp skat.cpp minmax.cpp hand.cpp hand.h)
+add_executable(SkatMinMax main.cpp skat.cpp minmax.cpp hand.cpp)
 
-add_executable(tests tests.cpp skat.cpp minmax.cpp)
+add_executable(tests tests.cpp minmax.cpp skat.cpp hand.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
