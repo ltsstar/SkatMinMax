@@ -30,25 +30,30 @@ CardContainer::CardContainer() :
     lowest_colors{nullptr},
     highest_colors{nullptr},
     lowest_joker(nullptr),
-    highest_joker(nullptr)
+    highest_joker(nullptr),
+    colors{std::vector<Card*>()}
 {}
 
 CardContainer::CardContainer(const CardContainer& other_card_container) :
-        lowest_colors{nullptr},
-        highest_colors{nullptr},
-        lowest_joker(nullptr),
-        highest_joker(nullptr)
+        lowest_joker(other_card_container.lowest_joker),
+        highest_joker(other_card_container.highest_joker),
+        jokers(other_card_container.jokers)
 {
-    jokers = other_card_container.jokers;
     for(int i=0;i<4;++i)
+    {
         colors[i] = other_card_container.colors[i];
+        lowest_colors[i] = other_card_container.lowest_colors[i];
+        highest_colors[i] = other_card_container.highest_colors[i];
+    }
+
 }
 
 CardContainer::CardContainer(std::set<CardType> cards) :
         lowest_colors{nullptr},
         highest_colors{nullptr},
         lowest_joker(nullptr),
-        highest_joker(nullptr)
+        highest_joker(nullptr),
+        colors{std::vector<Card*>()}
 {
     for(const CardType &card_type : cards){
         Card* card = new Card(card_type);
@@ -60,7 +65,8 @@ CardContainer::CardContainer(std::vector<Card*> cards) :
         lowest_colors{nullptr},
         highest_colors{nullptr},
         lowest_joker(nullptr),
-        highest_joker(nullptr)
+        highest_joker(nullptr),
+        colors{std::vector<Card*>()}
 {
     for(Card *card : cards)
     {
@@ -109,9 +115,9 @@ bool CardContainer::has_card(const Card card)
 }
 
 bool CardContainer::has_higher_color(Card *card) {
-    for(auto const other_card : colors[card->get_color()])
+    for(auto const own_card : colors[card->get_color()])
     {
-        if(static_cast<int>(*card) > static_cast<int>(*other_card))
+        if(static_cast<int>(*card) < static_cast<int>(*own_card))
         {
             return true;
         }
@@ -237,7 +243,7 @@ void CardContainer::remove_card(const Card* card)
 void CardContainer::remove_cards()
 {
     jokers.clear();
-    for(auto color : colors)
+    for(auto &color : colors)
     {
         color.clear();
     }
@@ -344,7 +350,8 @@ std::vector<Card*> CardContainer::get_lowest_card_of_each_color()
     std::vector<Card*> result;
     for(Card* card : lowest_colors)
     {
-        result.push_back(card);
+        if(card != nullptr)
+            result.push_back(card);
     }
     return result;
 }
@@ -373,7 +380,7 @@ CardContainer CardContainer::get_color_and_jokers(int color)
 int CardContainer::size()
 {
     int res = jokers.size();
-    for(auto const color : colors)
+    for(auto const& color : colors)
     {
         res += color.size();
     }

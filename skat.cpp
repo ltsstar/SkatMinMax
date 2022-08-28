@@ -160,105 +160,67 @@ Card* GamePlay::get_second_card()
 
 void GamePlay::reduce_hand_equivalencies(CardContainer* player_hand)
 {
-    std::vector<Card*> result;
+    // reduce 7-8-9
     for(int i=0; i<4; ++i)
     {
         if(player_hand->has_color(i))
         {
-            std::vector<Card*> color_cards = player_hand->get_color(i);
+            Card* lowest_card = player_hand->get_lowest_card_of_color(i);
+            int card_val = static_cast<int>(*lowest_card) % 8;
+            if(card_val > 1)
+                continue;
 
-            bool has7 = false;
-            bool has8 = false;
-            bool has9 = false;
-
-            for(Card* card : color_cards)
+            if(card_val == 0)
             {
-                if(static_cast<int>(*card) == i*8)
+                Card* card_7 = lowest_card;
+                Card* card_8 = nullptr;
+                Card* card_9 = nullptr;
+                // player has 7
+                // => check if player also has 8 or 9
+                for(Card* card : player_hand->get_color(i))
                 {
-                    // has D7, H7, S7 or C7
-                    has7 = true;
-                } else if(static_cast<int>(*card) == i*8 + 1)
+                    card_val = static_cast<int>(*lowest_card) % 8;
+                    if(card_val == 1)
+                    {
+                        card_8 = card;
+                    } else if(card_val == 2)
+                    {
+                        card_9 = card;
+                    }
+                }
+                if(card_8 != nullptr && card_9 != nullptr)
                 {
-                    has8 = true;
-                } else if(static_cast<int>(*card) == i*8 + 2)
+                    player_hand->remove_card(card_8);
+                    player_hand->remove_card(card_9);
+                } else if(card_8 != nullptr)
                 {
-                    has9 = true;
+                    player_hand->remove_card(card_8);
+                }
+            } else // card_val == 1
+            {
+                Card* card_8 = lowest_card;
+                Card* card_9 = nullptr;
+
+                for(Card* card : player_hand->get_color(i))
+                {
+                    card_val = static_cast<int>(*lowest_card) % 8;
+                    if(card_val == 2)
+                    {
+                        card_9 = card;
+                        break;
+                    }
+                }
+
+                if(card_9 != nullptr)
+                {
+                    player_hand->remove_card(card_9);
                 }
             }
-
-            bool drop8 = false;
-            bool drop9 = false;
-
-            if(has7 && has8 && has9)
-            {
-                drop8 = true;
-                drop9 = true;
-            } else if(has7 && has9)
-            {
-                has8 = std::find_if(color_cards.begin(), color_cards.end(),
-                             [](Card* card) {return static_cast<int>(*card) % 8 == 1; })
-                                     != color_cards.end();
-
-                if(has8)
-                {
-                    drop8 = true;
-                    drop9 = true;
-                }
-            } else if(has7 && has8)
-            {
-                drop8 = true;
-            } else if(has8 && has9) {
-                drop9 = true;
-            }
-            for(Card* card : color_cards)
-            {
-                if(drop8 && static_cast<int>(*card) % 8 == 1)
-                    continue;
-                if(drop9 && static_cast<int>(*card) % 8 == 2)
-                    continue;
-                result.push_back(card);
-            }
         }
     }
 
-    int joker_int = 0;
-    std::vector<Card*> jokers = player_hand->get_jokers();
-
-    for(Card* joker : jokers)
-    {
-        int joker_color = pow(2, joker->get_color());
-        joker_int += joker_color;
-    }
-
-
-    if(joker_int == 15      // DJ + DJ + SJ + CJ
-        || joker_int == 7   // DJ + HJ + SJ
-        || joker_int == 14  // HJ + SJ + CJ
-        || joker_int == 6   // HJ + SJ
-        || joker_int == 3   // DJ + HJ
-        || joker_int == 12  // SJ + CJ
-        )
-    {
-        result.push_back(jokers.front());
-    } else if(joker_int == 13) // DJ + SJ + CJ
-    {
-        for(Card* joker : jokers)
-        {
-            if(static_cast<CardType>(*joker) == CardType::DJ
-                || static_cast<CardType>(*joker) == CardType::CJ)
-                result.push_back(joker);
-        }
-    } else if(joker_int == 11) // DJ + HJ + CJ
-    {
-        for(Card* joker : jokers)
-        {
-            if(static_cast<CardType>(*joker) == CardType::DJ
-               || static_cast<CardType>(*joker) == CardType::CJ)
-                result.push_back(joker);
-        }
-    } else {
-        result.insert(result.end(), jokers.begin(), jokers.end());
-    }
+    // reduce jokers
+    // TODO!
 }
 
 void GamePlay::reduce_last_play(Card* first_card, Card* second_card, CardContainer* hand)
@@ -269,13 +231,8 @@ void GamePlay::reduce_last_play(Card* first_card, Card* second_card, CardContain
     //    return only lowest cards
 
 
-    // check if first card was played by solo player
-    int last_winner = winners[played_cards.size() / 3];
-    if(last_winner != 0)
-        return;
-
     // check if first player outplayed second player
-    if(get_better_card(first_card, second_card) != 0)
+    if(get_better_card(first_card, second_card) == 1)
         return;
 
 
@@ -409,22 +366,22 @@ std::vector<Card*> GamePlay::get_next_moves()
         current_hand = backhand;
     }
 
-    CardContainer* temp_hand = new CardContainer((CardContainer&)current_hand);
-    if(new_play)
-    {
-        reduce_hand_equivalencies(temp_hand);
-    } else
+
+    CardContainer* temp_hand = new CardContainer((CardContainer&)*current_hand);
+    reduce_hand_equivalencies(temp_hand);
+    if(!new_play)
     {
         Card* first_card = get_first_card();
+        get_viable_cards(first_card, temp_hand);
+
         if(last_play)
         {
             Card* second_card = get_second_card();
-            reduce_last_play(first_card, second_card, current_hand);
+            reduce_last_play(first_card, second_card, temp_hand);
         }
-        get_viable_cards(first_card, temp_hand);
     }
     std::vector<Card*>res;
-    std::copy(temp_hand->begin(), temp_hand->end(), res.begin());
+    std::copy(temp_hand->begin(), temp_hand->end(), std::back_inserter(res));
     delete temp_hand;
     return res;
 }

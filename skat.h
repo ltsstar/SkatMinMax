@@ -13,6 +13,7 @@
 #include <set>
 #include <stdexcept>
 #include <cmath>
+#include <iterator>
 
 #include "hand.h"
 

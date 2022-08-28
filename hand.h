@@ -112,35 +112,36 @@ public:
     public:
         int group;
         std::vector<Card*>* jokers;
-        std::vector<Card*> (*colors)[4];
+        std::vector<Card*>* colors[4];
         std::vector<Card*>::iterator current_iterator;
 
-        explicit iterator(std::vector<Card*>* _jokers, std::vector<Card*> (*_colors)[4],
-                          std::vector<Card*>::iterator _current_iterator, int _group) :
-                jokers(_jokers), colors{_colors}, current_iterator(_current_iterator), group(_group)
+        iterator(std::vector<Card*>* _jokers,
+                 std::vector<Card*> _colors[4],
+                 std::vector<Card*>::iterator _current_iterator,
+                 int _group) :
+                 jokers(_jokers), current_iterator(_current_iterator), group(_group)
         {
+            for(int i=0; i<4;++i)
+            {
+                colors[i] = &_colors[i];
+            }
         }
         iterator& operator++() {
-            if(group < 4)
+            current_iterator++;
+
+            while(group < 4 && current_iterator == colors[group]->end())
             {
-                current_iterator++;
-                if(current_iterator == colors[group]->end())
+                group++;
+                if(group == 4)
                 {
-                    if(group == 3)
-                    {
-                        current_iterator = jokers->begin();
-                    } else {
-                        group++;
-                        current_iterator = colors[group]->begin();
-                    }
+                    current_iterator = jokers->begin();
                 } else {
-                    current_iterator++;
+                    current_iterator = colors[group]->begin();
                 }
-            } else {
-                current_iterator++;
-                if(current_iterator == jokers->end())
-                    group++;
             }
+
+            if(group == 4 && current_iterator == jokers->end())
+                group++;
             return *this;
         }
         bool operator==(const iterator other) const {
@@ -153,8 +154,13 @@ public:
             return *current_iterator;
         }
     };
-    iterator begin() {return iterator(&jokers, &colors, colors[0].begin(), 0);}
-    iterator end() {return iterator(&jokers, &colors, jokers.end(), 5);}
+    iterator begin() {
+        return iterator(&jokers,
+                        colors,
+                        colors[0].size() ? colors[0].begin() : colors[1].size() ? colors[1].begin() : colors[2].size() ? colors[2].begin() : colors[3].size() ? colors[3].begin() : jokers.begin(),
+                               colors[0].size() ? 0 : colors[1].size() ? 1 : colors[2].size() ? 2 : colors[3].size() ? 3 : jokers.size() ? 4 : 5);
+    }
+    iterator end() {return iterator(&jokers, colors, jokers.end(), 5);}
 };
 
 #endif //SKATMINMAX_HAND_H
